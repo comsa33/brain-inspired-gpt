@@ -229,7 +229,11 @@ class MultilingualBrainTokenizer:
         
     def decode(self, tokens: List[int]) -> str:
         """Decode tokens back to text"""
-        if not tokens:
+        # Handle numpy arrays
+        if hasattr(tokens, 'tolist'):
+            tokens = tokens.tolist()
+        
+        if len(tokens) == 0:
             return ""
             
         text_parts = []

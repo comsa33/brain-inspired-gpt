@@ -15,8 +15,7 @@ import time
 import argparse
 from dataclasses import dataclass
 import wandb
-from torch.cuda.amp import GradScaler
-from torch.cuda.amp import autocast
+from torch.amp import GradScaler, autocast
 import math
 
 # Add parent directory to path
@@ -137,7 +136,7 @@ class BrainGPTTrainer:
         self.scheduler = self._get_scheduler()
         
         # Mixed precision training
-        self.scaler = GradScaler() if config.mixed_precision else None
+        self.scaler = GradScaler('cuda') if config.mixed_precision else None
         
         # Initialize wandb
         if config.use_wandb:
@@ -231,7 +230,7 @@ class BrainGPTTrainer:
                 
                 # Forward pass
                 if self.config.mixed_precision:
-                    with autocast():
+                    with autocast('cuda'):
                         logits = self.model(x)
                         if isinstance(logits, tuple):
                             logits = logits[0]
@@ -344,7 +343,7 @@ class BrainGPTTrainer:
             x, y = x.to(self.device), y.to(self.device)
             
             if self.config.mixed_precision:
-                with autocast():
+                with autocast('cuda'):
                     logits = self.model(x)
                     if isinstance(logits, tuple):
                         logits = logits[0]
