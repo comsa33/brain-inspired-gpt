@@ -166,6 +166,123 @@ Brain-Inspired GPT includes full Korean language support with:
 - Validation: 2.4M tokens (50K unique texts)
 - Sources: KLUE, KorQuAD, Korean-English parallel corpus
 
+## 🏗️ Model Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph "Brain-Inspired GPT Architecture"
+        Input[Input Tokens] --> Embed[Token Embedding<br/>+ Positional Encoding]
+        
+        Embed --> CC1[Cortical Columns Layer 1<br/>32 columns × 64 neurons]
+        
+        subgraph "Cortical Column Details"
+            CC1 --> SA1[Sparse Attention<br/>95% Sparsity]
+            SA1 --> DA1[Dendritic Attention<br/>4 dendrites/neuron]
+            DA1 --> LI1[Lateral Inhibition<br/>Column Competition]
+            LI1 --> MLP1[Sparse MLP<br/>2:4 Structured Sparsity]
+        end
+        
+        MLP1 --> EE1{Early Exit?<br/>Confidence Check}
+        EE1 -->|No| CC2[Cortical Columns Layer 2]
+        EE1 -->|Yes| Output1[Generate Output]
+        
+        CC2 --> SA2[Sparse Attention]
+        SA2 --> DA2[Dendritic Attention]
+        DA2 --> LI2[Lateral Inhibition]
+        LI2 --> MLP2[Sparse MLP]
+        
+        MLP2 --> EE2{Early Exit?}
+        EE2 -->|No| CCN[...]
+        EE2 -->|Yes| Output2[Generate Output]
+        
+        CCN --> Final[Final Layer<br/>Cortical Columns]
+        Final --> Output[Output Tokens]
+    end
+    
+    subgraph "Developmental Stages"
+        S1[Stage 1: 2 Layers<br/>Basic Patterns]
+        S2[Stage 2: 4 Layers<br/>Simple Language]
+        S3[Stage 3: 8 Layers<br/>Complex Reasoning]
+        S4[Stage 4: 12 Layers<br/>Abstract Thinking]
+        S5[Stage 5: All Layers<br/>Full Capacity]
+        
+        S1 --> S2 --> S3 --> S4 --> S5
+    end
+    
+    style Input fill:#e1f5fe
+    style Output fill:#c8e6c9
+    style Output1 fill:#c8e6c9
+    style Output2 fill:#c8e6c9
+    style SA1 fill:#fff3e0
+    style SA2 fill:#fff3e0
+    style DA1 fill:#f3e5f5
+    style DA2 fill:#f3e5f5
+    style LI1 fill:#fce4ec
+    style LI2 fill:#fce4ec
+    style MLP1 fill:#e8f5e9
+    style MLP2 fill:#e8f5e9
+```
+
+### Detailed Component Breakdown
+
+```mermaid
+graph LR
+    subgraph "Sparse Attention Mechanism"
+        Q[Query] --> Mask[Magnitude Mask<br/>Top 5%]
+        K[Key] --> Mask
+        V[Value] --> Mask
+        Mask --> Attn[Sparse Attention<br/>Computation]
+        Attn --> Out1[Attention Output]
+    end
+    
+    subgraph "Dendritic Attention Flow"
+        Input2[Neuron Input] --> D1[Dendrite 1]
+        Input2 --> D2[Dendrite 2]
+        Input2 --> D3[Dendrite 3]
+        Input2 --> D4[Dendrite 4]
+        
+        D1 --> Gate1[Gating<br/>Function]
+        D2 --> Gate2[Gating<br/>Function]
+        D3 --> Gate3[Gating<br/>Function]
+        D4 --> Gate4[Gating<br/>Function]
+        
+        Gate1 --> Sum[Weighted<br/>Sum]
+        Gate2 --> Sum
+        Gate3 --> Sum
+        Gate4 --> Sum
+        
+        Sum --> Out2[Dendritic Output]
+    end
+    
+    subgraph "Cortical Column Structure"
+        N1[Neurons<br/>1-16] --> Col1[Column 1]
+        N2[Neurons<br/>17-32] --> Col2[Column 2]
+        N3[Neurons<br/>33-48] --> Col3[Column 3]
+        NN[...] --> ColN[Column 32]
+        
+        Col1 <--> Col2
+        Col2 <--> Col3
+        Col3 <--> ColN
+        
+        Col1 --> Comp[Competition<br/>via Lateral<br/>Inhibition]
+        Col2 --> Comp
+        Col3 --> Comp
+        ColN --> Comp
+    end
+    
+    style Q fill:#e3f2fd
+    style K fill:#e3f2fd
+    style V fill:#e3f2fd
+    style D1 fill:#f3e5f5
+    style D2 fill:#f3e5f5
+    style D3 fill:#f3e5f5
+    style D4 fill:#f3e5f5
+    style Col1 fill:#fff9c4
+    style Col2 fill:#fff9c4
+    style Col3 fill:#fff9c4
+    style ColN fill:#fff9c4
+```
+
 ## 🔬 Key Differences from Standard Transformers
 
 ### 1. Sparse Activation Pattern
