@@ -51,6 +51,9 @@ uv sync
 
 # 빠른 검증
 uv run validate_brain_gpt.py
+
+# 대화형 데모 실행
+uv run brain_gpt/quickstart.py
 ```
 
 **왜 uv인가?**

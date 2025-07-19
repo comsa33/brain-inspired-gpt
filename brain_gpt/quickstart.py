@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Fixed quickstart script for Brain-Inspired GPT
-Handles all edge cases and provides better error messages
+Quickstart script for Brain-Inspired GPT
+Quick demonstration with proper error handling
 """
 
 import torch

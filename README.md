@@ -51,6 +51,9 @@ uv sync
 
 # Quick validation
 uv run validate_brain_gpt.py
+
+# Run interactive demo
+uv run brain_gpt/quickstart.py
 ```
 
 **Why uv?**
