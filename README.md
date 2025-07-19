@@ -73,6 +73,24 @@ uv run brain_gpt/quickstart.py
 
 ## 🎯 Usage
 
+### Preparing Datasets
+
+Brain-Inspired GPT supports multiple state-of-the-art datasets:
+
+```bash
+# Quick start with Wikipedia (English + Korean)
+uv run data/openwebtext/prepare_simple.py
+
+# High-quality educational content (1.3T tokens)
+uv run data/openwebtext/prepare_fineweb.py --dataset-type fineweb-edu --max-samples 50000
+
+# Large-scale multilingual data (30T tokens)
+uv run data/openwebtext/prepare_redpajama.py --config sample --languages en ko
+
+# Korean datasets (KLUE, KorQuAD)
+uv run brain_gpt/training/prepare_korean_hf_datasets.py
+```
+
 ### Training a Model
 
 ```bash
@@ -81,6 +99,9 @@ uv run brain_gpt/training/train_simple.py
 
 # Korean language model
 uv run brain_gpt/training/train_korean.py
+
+# Multilingual training (recommended)
+uv run brain_gpt/training/train_multilingual.py --data-dirs data/simple data/korean_hf
 
 # RTX 3090 optimized training
 uv run brain_gpt/training/train_brain_gpt_3090.py
@@ -122,19 +143,28 @@ brain-inspired-gpt/
 │   │   ├── model_brain.py         # Main Brain-Inspired GPT model
 │   │   ├── sparse_layers.py       # 95% sparse layers with CUDA
 │   │   ├── attention_dendritic.py # Dendritic attention mechanism
-│   │   └── multilingual_tokenizer.py # Korean + English tokenizer
+│   │   └── multilingual_tokenizer.py # Multilingual tokenizer (KO/EN/Multi)
 │   ├── training/             # Training scripts
 │   │   ├── train_simple.py        # Quick training for demos
 │   │   ├── train_korean.py        # Korean language training
+│   │   ├── train_multilingual.py  # Multilingual training with balancing
 │   │   └── train_brain_gpt_3090.py # RTX 3090 optimized
 │   ├── tests/                # Comprehensive tests
 │   └── docs/                 # Additional documentation
 ├── data/                     # Datasets
-│   ├── korean_hf/               # Korean datasets from HuggingFace
-│   └── openwebtext/             # English datasets
+│   ├── korean_hf/               # Korean datasets (KLUE, KorQuAD)
+│   ├── openwebtext/             # Dataset preparation scripts
+│   │   ├── prepare_redpajama.py   # RedPajama-v2 (30T tokens)
+│   │   ├── prepare_fineweb.py     # FineWeb/FineWeb-Edu
+│   │   └── prepare_simple.py      # Wikipedia & quick datasets
+│   ├── simple/                  # Quick test datasets
+│   ├── fineweb/                 # High-quality web data
+│   └── redpajama_v2/            # Massive multilingual dataset
 ├── checkpoints/              # Saved models
-├── pyproject.toml            # Project configuration and dependencies
-└── uv.lock                   # Locked dependency versions
+├── prepare_all_datasets.py   # One-command dataset preparation
+├── test_multilingual.py      # Test multilingual capabilities
+├── pyproject.toml            # Project configuration
+└── uv.lock                   # Locked dependencies
 ```
 
 ## 🧪 Running Tests
@@ -148,23 +178,36 @@ uv run brain_gpt/tests/comprehensive_test.py
 
 # Validate model functionality
 uv run validate_brain_gpt.py
+
+# Test multilingual generation
+uv run test_multilingual.py
 ```
 
 ## 📚 Documentation
 
-All essential information is included in this README. For specific topics, refer to the relevant sections above.
+- **Main Documentation**: This README contains all essential information
+- **Dataset Guide**: See [DATA_GUIDE.md](DATA_GUIDE.md) for detailed dataset information
+- **Korean Version**: [README_KR.md](README_KR.md) for Korean documentation
 
-## 🌏 Korean Language Support
+## 🌏 Multilingual Support
 
-Brain-Inspired GPT includes full Korean language support with:
-- Custom Korean tokenizer
-- Pre-processed datasets from KLUE, KorQuAD, and parallel corpora
-- Korean-specific training configurations
+Brain-Inspired GPT provides comprehensive multilingual capabilities:
 
-### Korean Dataset Statistics
-- Training: 46.6M tokens (951K unique texts)
-- Validation: 2.4M tokens (50K unique texts)
-- Sources: KLUE, KorQuAD, Korean-English parallel corpus
+### Supported Languages
+- **Primary**: English, Korean
+- **Additional**: German, French, Spanish, Italian (via RedPajama-v2)
+- **Extensible**: Easy to add new languages
+
+### Language Features
+- **Automatic Detection**: Smart language detection in mixed texts
+- **Balanced Training**: Options for equal language representation
+- **Language Markers**: Clear separation between languages during training
+- **Cross-lingual**: Handles code-switching and mixed language inputs
+
+### Dataset Statistics
+- **Korean**: 50M+ tokens from KLUE, KorQuAD, parallel corpora
+- **English**: 15T+ tokens from FineWeb, Wikipedia, RedPajama
+- **Multilingual**: 30T tokens across 5 languages (RedPajama-v2)
 
 ## 🏗️ Model Architecture Diagram
 
@@ -357,15 +400,62 @@ config.gradient_checkpointing = True  # For memory efficiency
 ### Training with Custom Data
 
 ```bash
-# Prepare your dataset
-uv run brain_gpt/data/openwebtext/prepare.py --input your_data.txt
+# Quick dataset preparation (recommended for first time)
+uv run prepare_all_datasets.py --datasets korean wikipedia
 
-# Train with custom configuration
-uv run brain_gpt/training/train_brain_gpt_3090.py \
-  --data-path data/your_dataset \
-  --config-path configs/your_config.json \
+# Prepare all datasets at once (large download)
+uv run prepare_all_datasets.py --datasets all --max-samples 100000
+
+# Train with specific configuration
+uv run brain_gpt/training/train_multilingual.py \
+  --data-dirs data/simple data/fineweb data/korean_hf \
+  --language-sampling balanced \
   --batch-size 4 \
   --learning-rate 3e-4
+
+# Or train with single dataset
+uv run brain_gpt/training/train_brain_gpt_3090.py \
+  --data-dir data/fineweb \
+  --batch-size 4 \
+  --max-steps 10000
+```
+
+## 📚 Available Datasets
+
+Brain-Inspired GPT supports training on the latest, high-quality datasets:
+
+### 🌐 Multilingual Datasets
+
+| Dataset | Size | Languages | Description |
+|---------|------|-----------|-------------|
+| **RedPajama-v2** | 30T tokens | EN, DE, FR, ES, IT | Largest public LLM dataset with quality annotations |
+| **FineWeb** | 15T tokens | EN (primarily) | High-quality web data from 96 CommonCrawl snapshots |
+| **FineWeb-Edu** | 1.3T tokens | EN | Exceptionally high-quality educational content |
+| **Wikipedia** | ~20B tokens | 300+ languages | Encyclopedia content, available per language |
+| **Korean Datasets** | 50M+ tokens | KO | KLUE, KorQuAD, parallel corpora |
+
+### 🔧 Dataset Features
+
+- **Quality Filtering**: Advanced filtering based on perplexity, educational value, and content quality
+- **Language Detection**: Automatic language detection and proper tokenization
+- **Balanced Sampling**: Option to balance languages during training
+- **Memory Efficient**: Streaming support for large datasets
+- **Easy Integration**: Simple commands to download and prepare any dataset
+
+### 📊 Recommended Configurations
+
+```bash
+# For balanced multilingual model
+uv run data/openwebtext/prepare_simple.py --datasets wikipedia wikipedia-ko
+uv run brain_gpt/training/train_multilingual.py --language-sampling balanced
+
+# For high-quality English model
+uv run data/openwebtext/prepare_fineweb.py --dataset-type fineweb-edu
+uv run brain_gpt/training/train_brain_gpt_3090.py --data-dir data/fineweb
+
+# For Korean-focused model
+uv run brain_gpt/training/prepare_korean_hf_datasets.py
+uv run brain_gpt/training/train_korean.py
 ```
 
 ## 📈 Performance

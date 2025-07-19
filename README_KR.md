@@ -73,6 +73,24 @@ uv run brain_gpt/quickstart.py
 
 ## 🎯 사용법
 
+### 데이터셋 준비
+
+Brain-Inspired GPT는 최신 고품질 데이터셋을 지원합니다:
+
+```bash
+# Wikipedia로 빠른 시작 (영어 + 한국어)
+uv run data/openwebtext/prepare_simple.py
+
+# 고품질 교육 콘텐츠 (1.3T 토큰)
+uv run data/openwebtext/prepare_fineweb.py --dataset-type fineweb-edu --max-samples 50000
+
+# 대규모 다국어 데이터 (30T 토큰)
+uv run data/openwebtext/prepare_redpajama.py --config sample --languages en ko
+
+# 한국어 데이터셋 (KLUE, KorQuAD)
+uv run brain_gpt/training/prepare_korean_hf_datasets.py
+```
+
 ### 모델 학습
 
 ```bash
@@ -81,6 +99,9 @@ uv run brain_gpt/training/train_simple.py
 
 # 한국어 언어 모델
 uv run brain_gpt/training/train_korean.py
+
+# 다국어 학습 (권장)
+uv run brain_gpt/training/train_multilingual.py --data-dirs data/simple data/korean_hf
 
 # RTX 3090 최적화 학습
 uv run brain_gpt/training/train_brain_gpt_3090.py
@@ -118,23 +139,32 @@ print(tokenizer.decode(output_ko))
 ```
 brain-inspired-gpt/
 ├── brain_gpt/
-│   ├── core/                 # Core model implementation
-│   │   ├── model_brain.py         # Main Brain-Inspired GPT model
-│   │   ├── sparse_layers.py       # 95% sparse layers with CUDA
+│   ├── core/                 # 핵심 모델 구현
+│   │   ├── model_brain.py         # Brain-Inspired GPT 메인 모델
+│   │   ├── sparse_layers.py       # 95% sparse layers (CUDA 지원)
 │   │   ├── attention_dendritic.py # Dendritic attention mechanism
-│   │   └── multilingual_tokenizer.py # Korean + English tokenizer
-│   ├── training/             # Training scripts
-│   │   ├── train_simple.py        # Quick demo training
-│   │   ├── train_korean.py        # Korean language training
-│   │   └── train_brain_gpt_3090.py # RTX 3090 optimized
-│   ├── tests/                # Test suites
-│   └── docs/                 # Documentation
-├── data/                     # Datasets
-│   ├── korean_hf/               # Korean datasets from HuggingFace
-│   └── openwebtext/             # English datasets
-├── checkpoints/              # Saved models
-├── pyproject.toml            # Project configuration
-└── uv.lock                   # Locked dependencies
+│   │   └── multilingual_tokenizer.py # 다국어 tokenizer (한국어/영어/다국어)
+│   ├── training/             # 학습 스크립트
+│   │   ├── train_simple.py        # 빠른 데모 학습
+│   │   ├── train_korean.py        # 한국어 특화 학습
+│   │   ├── train_multilingual.py  # 다국어 균형 학습
+│   │   └── train_brain_gpt_3090.py # RTX 3090 최적화
+│   ├── tests/                # 종합 테스트
+│   └── docs/                 # 추가 문서
+├── data/                     # 데이터셋
+│   ├── korean_hf/               # 한국어 데이터셋 (KLUE, KorQuAD)
+│   ├── openwebtext/             # 데이터셋 준비 스크립트
+│   │   ├── prepare_redpajama.py   # RedPajama-v2 (30T 토큰)
+│   │   ├── prepare_fineweb.py     # FineWeb/FineWeb-Edu
+│   │   └── prepare_simple.py      # Wikipedia & 빠른 데이터셋
+│   ├── simple/                  # 빠른 테스트 데이터셋
+│   ├── fineweb/                 # 고품질 웹 데이터
+│   └── redpajama_v2/            # 대규모 다국어 데이터셋
+├── checkpoints/              # 저장된 모델
+├── prepare_all_datasets.py   # 원클릭 데이터셋 준비
+├── test_multilingual.py      # 다국어 기능 테스트
+├── pyproject.toml            # 프로젝트 설정
+└── uv.lock                   # 고정된 의존성
 ```
 
 ## 🧪 테스트 실행
@@ -148,23 +178,36 @@ uv run brain_gpt/tests/comprehensive_test.py
 
 # 모델 기능 검증
 uv run validate_brain_gpt.py
+
+# 다국어 생성 테스트
+uv run test_multilingual.py
 ```
 
 ## 📚 문서
 
-모든 필수 정보는 이 README에 포함되어 있습니다. 특정 주제는 위의 관련 섹션을 참조하세요.
+- **주요 문서**: 이 README에 모든 필수 정보 포함
+- **데이터셋 가이드**: 자세한 데이터셋 정보는 [DATA_GUIDE.md](DATA_GUIDE.md) 참조
+- **영어 버전**: [README.md](README.md)에서 영어 문서 확인
 
-## 🌏 한국어 지원
+## 🌏 다국어 지원
 
-Brain-Inspired GPT는 다음을 포함한 완전한 한국어 지원을 제공합니다:
-- 커스텀 한국어 토크나이저
-- KLUE, KorQuAD, 병렬 말뭉치의 전처리된 데이터셋
-- 한국어 특화 학습 구성
+Brain-Inspired GPT는 포괄적인 다국어 기능을 제공합니다:
 
-### 한국어 데이터셋 통계
-- 학습: 4,660만 토큰 (95만 고유 텍스트)
-- 검증: 240만 토큰 (5만 고유 텍스트)
-- 출처: KLUE, KorQuAD, 한-영 병렬 말뭉치
+### 지원 언어
+- **주요 언어**: 한국어, 영어
+- **추가 언어**: 독일어, 프랑스어, 스페인어, 이탈리아어 (RedPajama-v2)
+- **확장 가능**: 새로운 언어 추가 용이
+
+### 언어 기능
+- **자동 감지**: 혼합 텍스트의 스마트 언어 감지
+- **균형 학습**: 동등한 언어 표현을 위한 옵션
+- **언어 마커**: 학습 중 언어 간 명확한 분리
+- **교차 언어**: 코드 스위칭 및 혼합 언어 입력 처리
+
+### 데이터셋 통계
+- **한국어**: KLUE, KorQuAD, 병렬 말뭉치에서 5천만 개 이상의 토큰
+- **영어**: FineWeb, Wikipedia, RedPajama에서 15T 이상의 토큰
+- **다국어**: 5개 언어에 걸친 30T 토큰 (RedPajama-v2)
 
 ## 🏗️ 모델 아키텍처 다이어그램
 
@@ -357,15 +400,62 @@ config.gradient_checkpointing = True  # 메모리 효율성을 위해
 ### 커스텀 데이터로 학습
 
 ```bash
-# 데이터셋 준비
-uv run brain_gpt/data/openwebtext/prepare.py --input your_data.txt
+# 빠른 데이터셋 준비 (처음 사용자 권장)
+uv run prepare_all_datasets.py --datasets korean wikipedia
 
-# 커스텀 구성으로 학습
-uv run brain_gpt/training/train_brain_gpt_3090.py \
-  --data-path data/your_dataset \
-  --config-path configs/your_config.json \
+# 모든 데이터셋을 한 번에 준비 (대용량 다운로드)
+uv run prepare_all_datasets.py --datasets all --max-samples 100000
+
+# 특정 구성으로 학습
+uv run brain_gpt/training/train_multilingual.py \
+  --data-dirs data/simple data/fineweb data/korean_hf \
+  --language-sampling balanced \
   --batch-size 4 \
   --learning-rate 3e-4
+
+# 또는 단일 데이터셋으로 학습
+uv run brain_gpt/training/train_brain_gpt_3090.py \
+  --data-dir data/fineweb \
+  --batch-size 4 \
+  --max-steps 10000
+```
+
+## 📚 사용 가능한 데이터셋
+
+Brain-Inspired GPT는 최신 고품질 데이터셋으로 학습을 지원합니다:
+
+### 🌐 다국어 데이터셋
+
+| 데이터셋 | 크기 | 언어 | 설명 |
+|---------|------|------|------|
+| **RedPajama-v2** | 30T 토큰 | EN, DE, FR, ES, IT | 품질 주석이 포함된 최대 규모 공개 LLM 데이터셋 |
+| **FineWeb** | 15T 토큰 | EN (주로) | 96개 CommonCrawl 스냅샷의 고품질 웹 데이터 |
+| **FineWeb-Edu** | 1.3T 토큰 | EN | 매우 높은 품질의 교육 콘텐츠 |
+| **Wikipedia** | ~20B 토큰 | 300개 이상 언어 | 백과사전 콘텐츠, 언어별 제공 |
+| **한국어 데이터셋** | 50M+ 토큰 | KO | KLUE, KorQuAD, 병렬 말뭉치 |
+
+### 🔧 데이터셋 기능
+
+- **품질 필터링**: perplexity, 교육적 가치, 콘텐츠 품질 기반 고급 필터링
+- **언어 감지**: 자동 언어 감지 및 적절한 tokenization
+- **균형 잡힌 샘플링**: 학습 중 언어 균형 옵션
+- **메모리 효율성**: 대규모 데이터셋을 위한 스트리밍 지원
+- **쉬운 통합**: 간단한 명령으로 데이터셋 다운로드 및 준비
+
+### 📊 권장 구성
+
+```bash
+# 균형 잡힌 다국어 모델
+uv run data/openwebtext/prepare_simple.py --datasets wikipedia wikipedia-ko
+uv run brain_gpt/training/train_multilingual.py --language-sampling balanced
+
+# 고품질 영어 모델
+uv run data/openwebtext/prepare_fineweb.py --dataset-type fineweb-edu
+uv run brain_gpt/training/train_brain_gpt_3090.py --data-dir data/fineweb
+
+# 한국어 중심 모델
+uv run brain_gpt/training/prepare_korean_hf_datasets.py
+uv run brain_gpt/training/train_korean.py
 ```
 
 ## 📈 성능
