@@ -17,6 +17,12 @@
 
 Brain-Inspired GPT is a research project exploring whether language models can achieve comparable performance to dense models while using only 5% of active parameters, mimicking the sparse activation patterns of the human brain. This project investigates the potential for 95% sparsity in neural networks, aiming to enable efficient edge deployment and advance our understanding of biologically-inspired AI architectures.
 
+### 📢 Latest Updates
+- ✅ **Multilingual Training Fixed**: Resolved batch size mismatch issues in multilingual training
+- ✅ **Working Datasets**: Korean (KLUE/KorQuAD), Wikipedia, C4 datasets ready to use
+- ✅ **Quick Start**: New `quick_prepare_datasets.py` for easy dataset preparation
+- 🚧 **Under Development**: RedPajama-v2 and FineWeb integration (API changes in progress)
+
 ### ✨ Key Features
 
 - **🧠 Brain-Like Sparsity**: 95% sparse activation mimicking biological neural networks
@@ -78,17 +84,18 @@ uv run brain_gpt/quickstart.py
 Brain-Inspired GPT supports multiple state-of-the-art datasets:
 
 ```bash
-# Quick start with Wikipedia (English + Korean)
+# Quick start with working datasets (recommended)
+uv run quick_prepare_datasets.py
+
+# Or prepare individual datasets:
+# Wikipedia (English + Korean)
 uv run data/openwebtext/prepare_simple.py
-
-# High-quality educational content (1.3T tokens)
-uv run data/openwebtext/prepare_fineweb.py --dataset-type fineweb-edu --max-samples 50000
-
-# Large-scale multilingual data (30T tokens)
-uv run data/openwebtext/prepare_redpajama.py --config sample --languages en ko
 
 # Korean datasets (KLUE, KorQuAD)
 uv run brain_gpt/training/prepare_korean_hf_datasets.py
+
+# C4 dataset (high-quality English)
+uv run data/openwebtext/prepare_c4.py --max-samples 50000
 ```
 
 ### Training a Model
@@ -154,17 +161,19 @@ brain-inspired-gpt/
 ├── data/                     # Datasets
 │   ├── korean_hf/               # Korean datasets (KLUE, KorQuAD)
 │   ├── openwebtext/             # Dataset preparation scripts
-│   │   ├── prepare_redpajama.py   # RedPajama-v2 (30T tokens)
-│   │   ├── prepare_fineweb.py     # FineWeb/FineWeb-Edu
-│   │   └── prepare_simple.py      # Wikipedia & quick datasets
-│   ├── simple/                  # Quick test datasets
-│   ├── fineweb/                 # High-quality web data
-│   └── redpajama_v2/            # Massive multilingual dataset
+│   │   ├── prepare_simple.py      # Wikipedia datasets
+│   │   ├── prepare_c4.py          # C4 dataset preparation
+│   │   └── prepare_korean_hf_datasets.py # Korean datasets
+│   ├── simple/                  # Wikipedia datasets
+│   ├── c4/                      # Common Crawl cleaned
+│   └── [dataset_name]/          # Other datasets
 ├── checkpoints/              # Saved models
-├── prepare_all_datasets.py   # One-command dataset preparation
+├── quick_prepare_datasets.py # Quick dataset preparation
 ├── test_multilingual.py      # Test multilingual capabilities
-├── pyproject.toml            # Project configuration
-└── uv.lock                   # Locked dependencies
+├── test_training_quick.py    # Quick training test
+├── DATA_GUIDE.md            # Detailed dataset guide
+├── pyproject.toml           # Project configuration
+└── uv.lock                  # Locked dependencies
 ```
 
 ## 🧪 Running Tests
@@ -422,17 +431,23 @@ uv run brain_gpt/training/train_brain_gpt_3090.py \
 
 ## 📚 Available Datasets
 
-Brain-Inspired GPT supports training on the latest, high-quality datasets:
+Brain-Inspired GPT supports training on various high-quality datasets:
 
-### 🌐 Multilingual Datasets
+### 🌐 Working Datasets
 
-| Dataset | Size | Languages | Description |
-|---------|------|-----------|-------------|
-| **RedPajama-v2** | 30T tokens | EN, DE, FR, ES, IT | Largest public LLM dataset with quality annotations |
-| **FineWeb** | 15T tokens | EN (primarily) | High-quality web data from 96 CommonCrawl snapshots |
-| **FineWeb-Edu** | 1.3T tokens | EN | Exceptionally high-quality educational content |
-| **Wikipedia** | ~20B tokens | 300+ languages | Encyclopedia content, available per language |
-| **Korean Datasets** | 50M+ tokens | KO | KLUE, KorQuAD, parallel corpora |
+| Dataset | Size | Languages | Status | Description |
+|---------|------|-----------|--------|-------------|
+| **Korean Datasets** | 50M+ tokens | KO | ✅ Working | KLUE, KorQuAD, parallel corpora |
+| **Wikipedia** | ~20B tokens | 300+ languages | ✅ Working | Encyclopedia content |
+| **C4** | ~750GB | EN | ✅ Working | Clean Common Crawl |
+| **Simple Mix** | 100M+ tokens | KO+EN | ✅ Working | Combined Wikipedia datasets |
+
+### 🚧 Datasets Under Development
+
+| Dataset | Size | Languages | Issue |
+|---------|------|-----------|-------|
+| **RedPajama-v2** | 30T tokens | Multi | API changes |
+| **FineWeb** | 15T tokens | EN | Dataset structure changes |
 
 ### 🔧 Dataset Features
 
@@ -446,12 +461,12 @@ Brain-Inspired GPT supports training on the latest, high-quality datasets:
 
 ```bash
 # For balanced multilingual model
-uv run data/openwebtext/prepare_simple.py --datasets wikipedia wikipedia-ko
+uv run quick_prepare_datasets.py
 uv run brain_gpt/training/train_multilingual.py --language-sampling balanced
 
 # For high-quality English model
-uv run data/openwebtext/prepare_fineweb.py --dataset-type fineweb-edu
-uv run brain_gpt/training/train_brain_gpt_3090.py --data-dir data/fineweb
+uv run data/openwebtext/prepare_c4.py --max-samples 100000
+uv run brain_gpt/training/train_brain_gpt_3090.py --data-dir data/c4
 
 # For Korean-focused model
 uv run brain_gpt/training/prepare_korean_hf_datasets.py

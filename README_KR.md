@@ -78,17 +78,18 @@ uv run brain_gpt/quickstart.py
 Brain-Inspired GPT는 최신 고품질 데이터셋을 지원합니다:
 
 ```bash
-# Wikipedia로 빠른 시작 (영어 + 한국어)
+# 빠른 시작 (검증된 데이터셋으로)
+uv run quick_prepare_datasets.py
+
+# 또는 개별 데이터셋 준비:
+# Wikipedia (영어 + 한국어)
 uv run data/openwebtext/prepare_simple.py
-
-# 고품질 교육 콘텐츠 (1.3T 토큰)
-uv run data/openwebtext/prepare_fineweb.py --dataset-type fineweb-edu --max-samples 50000
-
-# 대규모 다국어 데이터 (30T 토큰)
-uv run data/openwebtext/prepare_redpajama.py --config sample --languages en ko
 
 # 한국어 데이터셋 (KLUE, KorQuAD)
 uv run brain_gpt/training/prepare_korean_hf_datasets.py
+
+# C4 데이터셋 (고품질 영어)
+uv run data/openwebtext/prepare_c4.py --max-samples 50000
 ```
 
 ### 모델 학습
@@ -154,17 +155,19 @@ brain-inspired-gpt/
 ├── data/                     # 데이터셋
 │   ├── korean_hf/               # 한국어 데이터셋 (KLUE, KorQuAD)
 │   ├── openwebtext/             # 데이터셋 준비 스크립트
-│   │   ├── prepare_redpajama.py   # RedPajama-v2 (30T 토큰)
-│   │   ├── prepare_fineweb.py     # FineWeb/FineWeb-Edu
-│   │   └── prepare_simple.py      # Wikipedia & 빠른 데이터셋
-│   ├── simple/                  # 빠른 테스트 데이터셋
-│   ├── fineweb/                 # 고품질 웹 데이터
-│   └── redpajama_v2/            # 대규모 다국어 데이터셋
+│   │   ├── prepare_simple.py      # Wikipedia 데이터셋
+│   │   ├── prepare_c4.py          # C4 데이터셋 준비
+│   │   └── prepare_korean_hf_datasets.py # 한국어 데이터셋
+│   ├── simple/                  # Wikipedia 데이터셋
+│   ├── c4/                      # Common Crawl 정제본
+│   └── [dataset_name]/          # 기타 데이터셋
 ├── checkpoints/              # 저장된 모델
-├── prepare_all_datasets.py   # 원클릭 데이터셋 준비
+├── quick_prepare_datasets.py # 빠른 데이터셋 준비
 ├── test_multilingual.py      # 다국어 기능 테스트
-├── pyproject.toml            # 프로젝트 설정
-└── uv.lock                   # 고정된 의존성
+├── test_training_quick.py    # 빠른 학습 테스트
+├── DATA_GUIDE.md            # 상세 데이터셋 가이드
+├── pyproject.toml           # 프로젝트 설정
+└── uv.lock                  # 고정된 의존성
 ```
 
 ## 🧪 테스트 실행
@@ -422,17 +425,23 @@ uv run brain_gpt/training/train_brain_gpt_3090.py \
 
 ## 📚 사용 가능한 데이터셋
 
-Brain-Inspired GPT는 최신 고품질 데이터셋으로 학습을 지원합니다:
+Brain-Inspired GPT는 다양한 고품질 데이터셋으로 학습을 지원합니다:
 
-### 🌐 다국어 데이터셋
+### 🌐 작동하는 데이터셋
 
-| 데이터셋 | 크기 | 언어 | 설명 |
+| 데이터셋 | 크기 | 언어 | 상태 | 설명 |
+|---------|------|------|------|------|
+| **한국어 데이터셋** | 50M+ 토큰 | KO | ✅ 작동 | KLUE, KorQuAD, 병렬 말뭉치 |
+| **Wikipedia** | ~20B 토큰 | 300개 이상 언어 | ✅ 작동 | 백과사전 콘텐츠 |
+| **C4** | ~750GB | EN | ✅ 작동 | 정제된 Common Crawl |
+| **Simple Mix** | 100M+ 토큰 | KO+EN | ✅ 작동 | Wikipedia 혼합 데이터셋 |
+
+### 🚧 개발 중인 데이터셋
+
+| 데이터셋 | 크기 | 언어 | 문제 |
 |---------|------|------|------|
-| **RedPajama-v2** | 30T 토큰 | EN, DE, FR, ES, IT | 품질 주석이 포함된 최대 규모 공개 LLM 데이터셋 |
-| **FineWeb** | 15T 토큰 | EN (주로) | 96개 CommonCrawl 스냅샷의 고품질 웹 데이터 |
-| **FineWeb-Edu** | 1.3T 토큰 | EN | 매우 높은 품질의 교육 콘텐츠 |
-| **Wikipedia** | ~20B 토큰 | 300개 이상 언어 | 백과사전 콘텐츠, 언어별 제공 |
-| **한국어 데이터셋** | 50M+ 토큰 | KO | KLUE, KorQuAD, 병렬 말뭉치 |
+| **RedPajama-v2** | 30T 토큰 | 다국어 | API 변경 |
+| **FineWeb** | 15T 토큰 | EN | 데이터셋 구조 변경 |
 
 ### 🔧 데이터셋 기능
 
@@ -446,12 +455,12 @@ Brain-Inspired GPT는 최신 고품질 데이터셋으로 학습을 지원합니
 
 ```bash
 # 균형 잡힌 다국어 모델
-uv run data/openwebtext/prepare_simple.py --datasets wikipedia wikipedia-ko
+uv run quick_prepare_datasets.py
 uv run brain_gpt/training/train_multilingual.py --language-sampling balanced
 
 # 고품질 영어 모델
-uv run data/openwebtext/prepare_fineweb.py --dataset-type fineweb-edu
-uv run brain_gpt/training/train_brain_gpt_3090.py --data-dir data/fineweb
+uv run data/openwebtext/prepare_c4.py --max-samples 100000
+uv run brain_gpt/training/train_brain_gpt_3090.py --data-dir data/c4
 
 # 한국어 중심 모델
 uv run brain_gpt/training/prepare_korean_hf_datasets.py

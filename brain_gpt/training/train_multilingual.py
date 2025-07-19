@@ -200,6 +200,20 @@ class LanguageBalancedSampler(torch.utils.data.Sampler):
         return len(self.dataset)
 
 
+def multilingual_collate_fn(batch):
+    """Custom collate function for multilingual dataset"""
+    if len(batch[0]) == 3:
+        # Batch contains (x, y, language) tuples
+        xs, ys, languages = zip(*batch)
+        x_batch = torch.stack(xs)
+        y_batch = torch.stack(ys)
+        return x_batch, y_batch, languages
+    else:
+        # Regular batch
+        xs, ys = zip(*batch)
+        return torch.stack(xs), torch.stack(ys)
+
+
 class MultilingualTrainer:
     """Trainer for multilingual Brain-Inspired GPT"""
     
@@ -268,8 +282,12 @@ class MultilingualTrainer:
             data_path = Path(data_dir)
             
             # Check for different dataset types
+            # Use set to avoid duplicates
+            train_files = set()
             for pattern in ['*_train.bin', '*train.bin']:
-                for train_file in data_path.glob(pattern):
+                train_files.update(data_path.glob(pattern))
+            
+            for train_file in train_files:
                     # Detect language from metadata or filename
                     metadata_file = data_path / 'metadata.json'
                     language = 'en'  # default
@@ -277,8 +295,12 @@ class MultilingualTrainer:
                     if metadata_file.exists():
                         with open(metadata_file, 'r') as f:
                             metadata = json.load(f)
-                            languages = metadata.get('languages', ['en'])
-                            language = languages[0] if languages else 'en'
+                            languages = metadata.get('languages', metadata.get('language_stats', {}).keys())
+                            # For mixed datasets, use 'mixed' or the dominant language
+                            if len(languages) > 1:
+                                language = 'mixed'
+                            else:
+                                language = list(languages)[0] if languages else 'en'
                     elif 'korean' in str(train_file) or 'ko' in str(train_file):
                         language = 'ko'
                     
@@ -321,7 +343,8 @@ class MultilingualTrainer:
                 batch_size=self.config.batch_size,
                 sampler=sampler,
                 num_workers=2,
-                pin_memory=True
+                pin_memory=True,
+                collate_fn=multilingual_collate_fn
             )
         else:
             train_loader = DataLoader(
@@ -329,7 +352,8 @@ class MultilingualTrainer:
                 batch_size=self.config.batch_size,
                 shuffle=True,
                 num_workers=2,
-                pin_memory=True
+                pin_memory=True,
+                collate_fn=multilingual_collate_fn
             )
         
         self.model.train()
@@ -366,25 +390,53 @@ class MultilingualTrainer:
                 # Forward pass
                 if self.config.mixed_precision:
                     with autocast('cuda'):
-                        logits = self.model(x)
+                        # Pass targets to model for proper training mode
+                        logits, model_loss = self.model(x, targets=y)
+                        
+                        # Use model's computed loss if available
+                        if model_loss is not None:
+                            loss = model_loss / self.config.gradient_accumulation_steps
+                        else:
+                            # Fallback to manual loss computation
+                            if isinstance(logits, tuple):
+                                logits = logits[0]
+                        
+                            
+                            # Ensure proper shapes
+                            if logits.dim() == 2:
+                                # logits is (batch_size, vocab_size) - single token prediction
+                                # y should be (batch_size,)
+                                if y.dim() == 2:
+                                    y = y[:, -1]  # Take last token
+                            else:
+                                # logits is (batch_size, seq_len, vocab_size)
+                                logits = logits.view(-1, logits.size(-1))
+                                y = y.view(-1)
+                            
+                            loss = nn.functional.cross_entropy(logits, y)
+                            loss = loss / self.config.gradient_accumulation_steps
+                else:
+                    # Pass targets to model for proper training mode
+                    logits, model_loss = self.model(x, targets=y)
+                    
+                    # Use model's computed loss if available
+                    if model_loss is not None:
+                        loss = model_loss / self.config.gradient_accumulation_steps
+                    else:
+                        # Fallback to manual loss computation
                         if isinstance(logits, tuple):
                             logits = logits[0]
                         
-                        loss = nn.functional.cross_entropy(
-                            logits.view(-1, logits.size(-1)),
-                            y.view(-1)
-                        )
+                        # Ensure proper shapes (same as above)
+                        if logits.dim() == 2:
+                            if y.dim() == 2:
+                                y = y[:, -1]
+                        else:
+                            logits = logits.view(-1, logits.size(-1))
+                            y = y.view(-1)
+                        
+                        loss = nn.functional.cross_entropy(logits, y)
                         loss = loss / self.config.gradient_accumulation_steps
-                else:
-                    logits = self.model(x)
-                    if isinstance(logits, tuple):
-                        logits = logits[0]
-                    
-                    loss = nn.functional.cross_entropy(
-                        logits.view(-1, logits.size(-1)),
-                        y.view(-1)
-                    )
-                    loss = loss / self.config.gradient_accumulation_steps
                 
                 # Backward pass
                 if self.config.mixed_precision:
@@ -458,7 +510,8 @@ class MultilingualTrainer:
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.config.batch_size,
-                shuffle=False
+                shuffle=False,
+                collate_fn=multilingual_collate_fn
             )
             
             losses = []
@@ -473,14 +526,18 @@ class MultilingualTrainer:
                 
                 x, y = x.to(self.device), y.to(self.device)
                 
-                logits = self.model(x)
-                if isinstance(logits, tuple):
-                    logits = logits[0]
+                # Pass targets for proper evaluation
+                logits, loss = self.model(x, targets=y)
                 
-                loss = nn.functional.cross_entropy(
-                    logits.view(-1, logits.size(-1)),
-                    y.view(-1)
-                )
+                # If model doesn't compute loss, do it manually
+                if loss is None:
+                    if isinstance(logits, tuple):
+                        logits = logits[0]
+                    
+                    loss = nn.functional.cross_entropy(
+                        logits.view(-1, logits.size(-1)),
+                        y.view(-1)
+                    )
                 
                 losses.append(loss.item())
             
