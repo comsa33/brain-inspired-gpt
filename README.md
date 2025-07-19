@@ -34,7 +34,9 @@ Brain-Inspired GPT is a revolutionary language model that mimics the human brain
 - NVIDIA GPU with CUDA 11.8+ (RTX 3090 recommended)
 - 24GB+ VRAM for full model, 8GB+ for small models
 
-### Installation with uv (Recommended)
+### Installation with uv
+
+This project uses [uv](https://github.com/astral-sh/uv) for fast, reliable Python package management.
 
 ```bash
 # Install uv if you haven't already
@@ -44,14 +46,18 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 git clone https://github.com/comsa33/brain-inspired-gpt.git
 cd brain-inspired-gpt
 
-# Create virtual environment and install dependencies
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -r requirements.txt
+# Install all dependencies (automatically creates venv)
+uv sync
 
 # Quick validation
 uv run validate_brain_gpt.py
 ```
+
+**Why uv?**
+- ⚡ 10-100x faster than pip
+- 🔒 Automatic dependency resolution with lockfile
+- 🎯 Single command for all dependencies
+- 🔧 Built-in virtual environment management
 
 ## 📊 Model Architectures
 
@@ -124,7 +130,8 @@ brain-inspired-gpt/
 │   ├── korean_hf/               # Korean datasets from HuggingFace
 │   └── openwebtext/             # English datasets
 ├── checkpoints/              # Saved models
-└── requirements.txt          # Dependencies
+├── pyproject.toml            # Project configuration and dependencies
+└── uv.lock                   # Locked dependency versions
 ```
 
 ## 🧪 Running Tests
@@ -235,9 +242,9 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 # Clone and setup development environment
 git clone https://github.com/comsa33/brain-inspired-gpt.git
 cd brain-inspired-gpt
-uv venv
-source .venv/bin/activate
-uv pip install -r requirements-dev.txt
+
+# Install all dependencies including dev tools
+uv sync --all-extras
 
 # Run tests before submitting PR
 uv run pytest

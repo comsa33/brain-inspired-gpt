@@ -34,7 +34,9 @@ Brain-Inspired GPT는 95% 희소성과 생물학적 영감을 받은 아키텍�
 - CUDA 11.8+ 지원 NVIDIA GPU (RTX 3090 권장)
 - 전체 모델용 24GB+ VRAM, 소형 모델용 8GB+
 
-### uv를 사용한 설치 (권장)
+### uv를 사용한 설치
+
+이 프로젝트는 빠르고 안정적인 Python 패키지 관리를 위해 [uv](https://github.com/astral-sh/uv)를 사용합니다.
 
 ```bash
 # uv가 없다면 먼저 설치
@@ -44,14 +46,18 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 git clone https://github.com/comsa33/brain-inspired-gpt.git
 cd brain-inspired-gpt
 
-# 가상 환경 생성 및 종속성 설치
-uv venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-uv pip install -r requirements.txt
+# 모든 종속성 설치 (자동으로 venv 생성)
+uv sync
 
 # 빠른 검증
 uv run validate_brain_gpt.py
 ```
+
+**왜 uv인가?**
+- ⚡ pip보다 10-100배 빠름
+- 🔒 lockfile로 자동 종속성 해결
+- 🎯 모든 종속성을 단일 명령으로 설치
+- 🔧 내장된 가상 환경 관리
 
 ## 📊 모델 아키텍처
 
@@ -124,7 +130,8 @@ brain-inspired-gpt/
 │   ├── korean_hf/               # HuggingFace의 한국어 데이터셋
 │   └── openwebtext/             # 영어 데이터셋
 ├── checkpoints/              # 저장된 모델
-└── requirements.txt          # 종속성
+├── pyproject.toml            # 프로젝트 구성 및 종속성
+└── uv.lock                   # 잠긴 종속성 버전
 ```
 
 ## 🧪 테스트 실행
@@ -235,9 +242,9 @@ uv run brain_gpt/training/train_brain_gpt_3090.py \
 # 개발 환경 복제 및 설정
 git clone https://github.com/comsa33/brain-inspired-gpt.git
 cd brain-inspired-gpt
-uv venv
-source .venv/bin/activate
-uv pip install -r requirements-dev.txt
+
+# 개발 도구를 포함한 모든 종속성 설치
+uv sync --all-extras
 
 # PR 제출 전 테스트 실행
 uv run pytest
