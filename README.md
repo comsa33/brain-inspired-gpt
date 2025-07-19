@@ -15,7 +15,7 @@
 
 ## 🌟 Overview
 
-Brain-Inspired GPT is a revolutionary language model that mimics the human brain's efficiency through 95% sparsity and biologically-inspired architecture. It achieves comparable performance to dense models while using only 5% of parameters, making it ideal for edge deployment and research into efficient AI.
+Brain-Inspired GPT is a research project exploring whether language models can achieve comparable performance to dense models while using only 5% of active parameters, mimicking the sparse activation patterns of the human brain. This project investigates the potential for 95% sparsity in neural networks, aiming to enable efficient edge deployment and advance our understanding of biologically-inspired AI architectures.
 
 ### ✨ Key Features
 
@@ -165,6 +165,38 @@ Brain-Inspired GPT includes full Korean language support with:
 - Training: 46.6M tokens (951K unique texts)
 - Validation: 2.4M tokens (50K unique texts)
 - Sources: KLUE, KorQuAD, Korean-English parallel corpus
+
+## 🔬 Key Differences from Standard Transformers
+
+### 1. Sparse Activation Pattern
+- **Standard Transformer**: All neurons activate densely (100% activation)
+- **Brain-Inspired GPT**: Only 5% activate per forward pass (95% sparsity)
+- **Implementation**: Magnitude-based pruning with structured sparsity (2:4 pattern for RTX GPUs)
+
+### 2. Cortical Column Architecture
+- **Standard Transformer**: Flat layer structure with uniform processing
+- **Brain-Inspired GPT**: Modular cortical columns (32 columns × 64 neurons)
+- **Features**: Lateral inhibition for inter-column competition, enhanced local processing
+
+### 3. Dendritic Attention Mechanism
+- **Standard Transformer**: Single attention pathway per head
+- **Brain-Inspired GPT**: Multiple dendrites per neuron (4 dendrites default)
+- **Benefits**: Context-dependent sparse routing, biologically plausible gradient flow
+
+### 4. Developmental Stage Training
+- **Standard Transformer**: Fixed architecture throughout training
+- **Brain-Inspired GPT**: 5-stage progressive growth mimicking human development
+- **Stages**:
+  - Stage 1: Basic pattern recognition (2 layers)
+  - Stage 2: Simple language understanding (4 layers)
+  - Stage 3: Complex reasoning (8 layers)
+  - Stage 4: Abstract thinking (12 layers)
+  - Stage 5: Full capacity (all layers)
+
+### 5. Early Exit Mechanism
+- **Standard Transformer**: Must process through all layers
+- **Brain-Inspired GPT**: Confidence-based early exit (average 40% layers used)
+- **Benefits**: Dynamic computation allocation, improved energy efficiency
 
 ## 💡 Key Innovations
 

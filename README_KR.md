@@ -1,4 +1,4 @@
-# 🧠 뇌 영감 GPT (Brain-Inspired GPT)
+# 🧠 Brain-Inspired GPT
 
 <div align="center">
 
@@ -15,16 +15,16 @@
 
 ## 🌟 개요
 
-Brain-Inspired GPT는 95% 희소성과 생물학적 영감을 받은 아키텍처를 통해 인간 뇌의 효율성을 모방하는 혁신적인 언어 모델입니다. 파라미터의 5%만 사용하면서도 밀집 모델과 비슷한 성능을 달성하여, 엣지 배포와 효율적인 AI 연구에 이상적입니다.
+Brain-Inspired GPT는 인간 뇌의 sparse activation 패턴을 모방하여 95% sparsity를 달성하는 언어 모델입니다. 이 프로젝트는 전체 파라미터의 5%만 활성화하면서도 기존 dense 모델과 유사한 성능을 낼 수 있는지 연구하는 것을 목적으로 합니다. 특히 edge deployment와 효율적인 AI 시스템 구축 가능성을 탐구합니다.
 
 ### ✨ 주요 특징
 
-- **🧠 뇌와 같은 희소성**: 생물학적 신경망을 모방한 95% 희소 활성화
-- **⚡ RTX 3090 최적화**: 2:4 구조적 희소성을 위한 커스텀 CUDA 커널
-- **🏛️ 피질 기둥**: 신피질 조직에서 영감을 받은 모듈식 아키텍처
-- **🌿 수상돌기 주의**: 생물학적으로 타당한 주의 메커니즘
-- **🌏 다국어 지원**: 확장 가능한 토크나이저로 한국어 + 영어 지원
-- **📈 발달 학습**: 커리큘럼 학습을 통한 점진적 복잡성 증가
+- **🧠 Brain-like Sparsity**: 생물학적 신경망의 95% sparse activation 구현
+- **⚡ RTX 3090 최적화**: 2:4 structured sparsity를 위한 custom CUDA kernel
+- **🏛️ Cortical Columns**: Neocortex의 columnar organization을 모방한 모듈식 아키텍처
+- **🌿 Dendritic Attention**: 생물학적으로 타당한 attention mechanism
+- **🌏 다국어 지원**: 확장 가능한 tokenizer로 한국어 + 영어 지원
+- **📈 Developmental Learning**: Curriculum learning을 통한 점진적 complexity 증가
 
 ## 🚀 빠른 시작
 
@@ -64,7 +64,7 @@ uv run brain_gpt/quickstart.py
 
 ## 📊 모델 아키텍처
 
-| 모델 | 레이어 | 히든 | 헤드 | 전체 파라미터 | 유효 (5%) | VRAM 사용량 |
+| Model | Layers | Hidden | Heads | Total Params | Effective (5%) | VRAM Usage |
 |------|--------|------|------|---------------|-----------|-------------|
 | Small | 6 | 512 | 8 | 60.1M | 3.0M | ~0.5GB |
 | Medium | 12 | 1024 | 16 | 221.8M | 11.1M | ~2.8GB |
@@ -118,23 +118,23 @@ print(tokenizer.decode(output_ko))
 ```
 brain-inspired-gpt/
 ├── brain_gpt/
-│   ├── core/                 # 핵심 모델 구현
-│   │   ├── model_brain.py         # 메인 Brain-Inspired GPT 모델
-│   │   ├── sparse_layers.py       # CUDA를 사용한 95% 희소 레이어
-│   │   ├── attention_dendritic.py # 수상돌기 주의 메커니즘
-│   │   └── multilingual_tokenizer.py # 한국어 + 영어 토크나이저
-│   ├── training/             # 학습 스크립트
-│   │   ├── train_simple.py        # 데모용 빠른 학습
-│   │   ├── train_korean.py        # 한국어 언어 학습
-│   │   └── train_brain_gpt_3090.py # RTX 3090 최적화
-│   ├── tests/                # 종합 테스트
-│   └── docs/                 # 추가 문서
-├── data/                     # 데이터셋
-│   ├── korean_hf/               # HuggingFace의 한국어 데이터셋
-│   └── openwebtext/             # 영어 데이터셋
-├── checkpoints/              # 저장된 모델
-├── pyproject.toml            # 프로젝트 구성 및 종속성
-└── uv.lock                   # 잠긴 종속성 버전
+│   ├── core/                 # Core model implementation
+│   │   ├── model_brain.py         # Main Brain-Inspired GPT model
+│   │   ├── sparse_layers.py       # 95% sparse layers with CUDA
+│   │   ├── attention_dendritic.py # Dendritic attention mechanism
+│   │   └── multilingual_tokenizer.py # Korean + English tokenizer
+│   ├── training/             # Training scripts
+│   │   ├── train_simple.py        # Quick demo training
+│   │   ├── train_korean.py        # Korean language training
+│   │   └── train_brain_gpt_3090.py # RTX 3090 optimized
+│   ├── tests/                # Test suites
+│   └── docs/                 # Documentation
+├── data/                     # Datasets
+│   ├── korean_hf/               # Korean datasets from HuggingFace
+│   └── openwebtext/             # English datasets
+├── checkpoints/              # Saved models
+├── pyproject.toml            # Project configuration
+└── uv.lock                   # Locked dependencies
 ```
 
 ## 🧪 테스트 실행
@@ -166,27 +166,59 @@ Brain-Inspired GPT는 다음을 포함한 완전한 한국어 지원을 제공�
 - 검증: 240만 토큰 (5만 고유 텍스트)
 - 출처: KLUE, KorQuAD, 한-영 병렬 말뭉치
 
-## 💡 주요 혁신
+## 🔬 기존 Transformer와의 차별점
 
-### 1. 극한 희소성 (95%)
-- 언제나 뉴런의 5%만 활성화
-- 생물학적 뇌 효율성과 일치
-- 최소한의 성능 손실로 20배 파라미터 감소
+### 1. Sparse Activation Pattern
+- **기존 Transformer**: 모든 뉴런이 dense하게 활성화 (100% activation)
+- **Brain-Inspired GPT**: 각 forward pass에서 5%만 활성화 (95% sparsity)
+- **구현 방식**: Magnitude-based pruning과 structured sparsity (2:4 pattern for RTX GPUs)
 
-### 2. 피질 기둥
-- 신피질과 같은 모듈식 처리 단위
-- 일반적인 구성: 32개 기둥 × 64개 뉴런
-- 경쟁을 위한 측면 억제
+### 2. Cortical Column Architecture
+- **기존 Transformer**: Flat layer structure with uniform processing
+- **Brain-Inspired GPT**: Modular cortical columns (32 columns × 64 neurons)
+- **특징**: Lateral inhibition을 통한 column 간 competition, local processing 강화
 
-### 3. 수상돌기 주의
-- 뉴런당 다중 수상돌기
-- 희소하고 문맥 의존적인 라우팅
-- 생물학적으로 타당한 신용 할당
+### 3. Dendritic Attention Mechanism
+- **기존 Transformer**: Single attention pathway per head
+- **Brain-Inspired GPT**: Multiple dendrites per neuron (4 dendrites default)
+- **효과**: Context-dependent sparse routing, biologically plausible gradient flow
 
-### 4. 발달 학습
-- 단순에서 복잡으로 5단계 커리큘럼
-- 점진적 아키텍처 성장
-- 인간 인지 발달 모방
+### 4. Developmental Stage Training
+- **기존 Transformer**: Fixed architecture throughout training
+- **Brain-Inspired GPT**: 5-stage progressive growth mimicking human development
+- **Stage 구성**:
+  - Stage 1: Basic pattern recognition (2 layers)
+  - Stage 2: Simple language understanding (4 layers)
+  - Stage 3: Complex reasoning (8 layers)
+  - Stage 4: Abstract thinking (12 layers)
+  - Stage 5: Full capacity (all layers)
+
+### 5. Early Exit Mechanism
+- **기존 Transformer**: 모든 layer를 거쳐야 출력 생성
+- **Brain-Inspired GPT**: Confidence 기반 early exit (평균 40% layer만 사용)
+- **이점**: Dynamic computation allocation, energy efficiency
+
+## 💡 주요 연구 내용
+
+### 1. Extreme Sparsity (95%)
+- 전체 뉴런의 5%만 동시 활성화
+- 생물학적 뇌의 sparse coding 원리 적용
+- 20배 파라미터 감소를 통한 효율성 검증
+
+### 2. Cortical Columns
+- Neocortex의 modular processing unit 구현
+- 32 columns × 64 neurons 구성
+- Lateral inhibition을 통한 competition mechanism
+
+### 3. Dendritic Attention
+- 뉴런당 multiple dendrites 구현
+- Sparse, context-dependent routing
+- Biologically plausible credit assignment
+
+### 4. Developmental Learning
+- 5단계 curriculum learning 적용
+- Progressive architectural growth
+- Human cognitive development 모방 시도
 
 ## 🛠️ 고급 구성
 
@@ -230,10 +262,10 @@ uv run brain_gpt/training/train_brain_gpt_3090.py \
 | 추론 속도 | 120 tok/s | 85 tok/s | 45 tok/s |
 | 메모리 사용량 | 0.5GB | 2.8GB | 6.2GB |
 
-### 효율성 향상
-- 밀집 모델보다 **95% 적은 활성 파라미터**
-- 희소 커널로 **10-20배 빠른 추론**
-- 엣지 배포를 위한 **5-10배 메모리 감소**
+### 예상 효율성 (연구 목표)
+- Dense 모델 대비 **95% 적은 active parameters**
+- Sparse kernel 활용 시 **10-20배 빠른 inference** 목표
+- Edge deployment를 위한 **5-10배 memory 감소** 기대
 
 ## 🤝 기여하기
 
@@ -259,11 +291,11 @@ uv run isort .
 
 이 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다 - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
-## 🙏 감사의 말
+## 🙏 Acknowledgments
 
-- 피질 기둥과 희소 코딩에 대한 신경과학 연구에서 영감을 받음
-- 효율적인 희소 연산을 위해 PyTorch와 Triton으로 구축
-- KLUE 및 KorQuAD 프로젝트의 한국어 데이터셋
+- Cortical columns와 sparse coding 관련 neuroscience 연구에서 영감을 받음
+- PyTorch와 Triton을 활용한 efficient sparse operations 구현
+- KLUE 및 KorQuAD 프로젝트의 한국어 데이터셋 활용
 
 ## 📮 연락처
 
