@@ -209,18 +209,18 @@ graph TB
         S1 --> S2 --> S3 --> S4 --> S5
     end
     
-    style Input fill:#e1f5fe
-    style Output fill:#c8e6c9
-    style Output1 fill:#c8e6c9
-    style Output2 fill:#c8e6c9
-    style SA1 fill:#fff3e0
-    style SA2 fill:#fff3e0
-    style DA1 fill:#f3e5f5
-    style DA2 fill:#f3e5f5
-    style LI1 fill:#fce4ec
-    style LI2 fill:#fce4ec
-    style MLP1 fill:#e8f5e9
-    style MLP2 fill:#e8f5e9
+    style Input fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    style Output fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style Output1 fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style Output2 fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style SA1 fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    style SA2 fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    style DA1 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
+    style DA2 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
+    style LI1 fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    style LI2 fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    style MLP1 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    style MLP2 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
 ```
 
 ### Detailed Component Breakdown
@@ -270,17 +270,17 @@ graph LR
         ColN --> Comp
     end
     
-    style Q fill:#e3f2fd
-    style K fill:#e3f2fd
-    style V fill:#e3f2fd
-    style D1 fill:#f3e5f5
-    style D2 fill:#f3e5f5
-    style D3 fill:#f3e5f5
-    style D4 fill:#f3e5f5
-    style Col1 fill:#fff9c4
-    style Col2 fill:#fff9c4
-    style Col3 fill:#fff9c4
-    style ColN fill:#fff9c4
+    style Q fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
+    style K fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
+    style V fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
+    style D1 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
+    style D2 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
+    style D3 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
+    style D4 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
+    style Col1 fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
+    style Col2 fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
+    style Col3 fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
+    style ColN fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
 ```
 
 ## 🔬 Key Differences from Standard Transformers
