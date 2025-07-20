@@ -5,16 +5,16 @@
     "wikipedia-ko"
   ],
   "dataset_stats": {
-    "wikipedia": 3115,
-    "wikipedia-ko": 46123
+    "wikipedia": 7639,
+    "wikipedia-ko": 9009
   },
   "language_stats": {
-    "ko": 46123,
-    "en": 3115
+    "en": 7639,
+    "ko": 9009
   },
-  "total_texts": 49238,
-  "train_texts": 46776,
-  "val_texts": 2462,
+  "total_texts": 16648,
+  "train_texts": 15815,
+  "val_texts": 833,
   "min_text_length": 100,
   "max_text_length": 10000,
   "download_date": "2025-07-19"
