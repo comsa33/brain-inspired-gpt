@@ -1,0 +1,12 @@
+{
+  "datasets": [
+    "data/datasets/klue/prepared",
+    "data/datasets/korean_wiki/prepared",
+    "data/datasets/wikipedia_en/prepared"
+  ],
+  "language_ratios": {
+    "ko": 0.4,
+    "en": 0.6
+  },
+  "total_tokens": 103600
+}

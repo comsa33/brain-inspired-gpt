@@ -1,582 +1,486 @@
-# 🧠 Brain-Inspired GPT
-
 <div align="center">
+
+# 🧠 CortexGPT
+
+**인간 두뇌에서 영감을 받은 실시간 학습 언어 모델**
 
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)
-![CUDA](https://img.shields.io/badge/CUDA-11.8+-76b900.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Model Size](https://img.shields.io/badge/model-60M--2.5B-purple.svg)
-![Sparsity](https://img.shields.io/badge/sparsity-95%25-orange.svg)
+![Model Size](https://img.shields.io/badge/model-768D-purple.svg)
+![Memory](https://img.shields.io/badge/memory-STM→LTM→Archive-orange.svg)
 
-[English](README.md) | [한국어](#korean)
+[English](README.md) | [한국어](#한국어)
 
 </div>
 
-## 🌟 개요
+## 한국어
 
-Brain-Inspired GPT는 인간 뇌의 sparse activation 패턴을 모방하여 95% sparsity를 달성하는 언어 모델입니다. 이 프로젝트는 전체 파라미터의 5%만 활성화하면서도 기존 dense 모델과 유사한 성능을 낼 수 있는지 연구하는 것을 목적으로 합니다. 특히 edge deployment와 효율적인 AI 시스템 구축 가능성을 탐구합니다.
-
-### 📢 최신 업데이트
-- 🚀 **BrainGPT V2 출시**: 진정한 희소 연산으로 주요 성능 개선
-- ✅ **3-5배 빠른 학습**: Mamba SSM 블록이 비효율적인 희소 attention을 대체
-- 🧠 **에피소드 메모리**: Hebbian 업데이트로 퓨샷 학습 가능
-- ⚡ **적응형 연산**: 효율성을 위한 동적 연산 할당
-- ✅ **다국어 학습 수정**: 배치 크기 불일치 문제 해결
-
-### ✨ 주요 특징
-
-**BrainGPT V2 (신규!)**
-- **🚀 Mamba SSM**: 이차 attention을 대체하는 선형 시간 시퀀스 처리
-- **💾 에피소드 메모리**: Hebbian 시냅스 업데이트로 퓨샷 학습
-- **⏱️ 적응형 연산**: 입력 복잡도에 따른 동적 연산 단계
-- **🎯 선택적 Attention**: 중요 토큰에만 attention (10% 희소성)
-- **⚡ 진정한 효율성**: 3-5배 빠른 학습, 50% 적은 메모리 사용
-
-**기존 특징**
-- **🧠 Brain-like Sparsity**: 생물학적 신경망의 95% sparse activation 구현
-- **🏛️ Cortical Columns**: Neocortex의 columnar organization을 모방한 모듈식 아키텍처
-- **🌏 다국어 지원**: 확장 가능한 tokenizer로 한국어 + 영어 지원
-- **📈 Developmental Learning**: Curriculum learning을 통한 점진적 complexity 증가
-
-## 🚀 빠른 시작
-
-### 필수 요구사항
-
-- Python 3.11+
-- CUDA 11.8+ 지원 NVIDIA GPU (RTX 3090 권장)
-- 전체 모델용 24GB+ VRAM, 소형 모델용 8GB+
-
-### uv를 사용한 설치
-
-이 프로젝트는 빠르고 안정적인 Python 패키지 관리를 위해 [uv](https://github.com/astral-sh/uv)를 사용합니다.
-
-```bash
-# uv가 없다면 먼저 설치
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# 저장소 복제
-git clone https://github.com/comsa33/brain-inspired-gpt.git
-cd brain-inspired-gpt
-
-# 모든 종속성 설치 (자동으로 venv 생성)
-uv sync
-
-# 빠른 검증
-uv run validate_brain_gpt.py
-
-# 대화형 데모 실행
-uv run brain_gpt/quickstart.py
-
-# 새로운 V2 모델 시도 (권장)
-uv run brain_gpt/training/train_brain_gpt_v2.py --data-dir data/simple --no-wandb
-
-# V1 vs V2 벤치마크
-uv run benchmark_v1_vs_v2.py
-```
-
-**왜 uv인가?**
-- ⚡ pip보다 10-100배 빠름
-- 🔒 lockfile로 자동 종속성 해결
-- 🎯 모든 종속성을 단일 명령으로 설치
-- 🔧 내장된 가상 환경 관리
-
-## 📊 모델 아키텍처
-
-| Model | Layers | Hidden | Heads | Total Params | Effective (5%) | VRAM Usage |
-|------|--------|------|------|---------------|-----------|-------------|
-| Small | 6 | 512 | 8 | 60.1M | 3.0M | ~0.5GB |
-| Medium | 12 | 1024 | 16 | 221.8M | 11.1M | ~2.8GB |
-| Large | 24 | 1536 | 24 | 495.2M | 24.8M | ~6.2GB |
-| XLarge | 48 | 2048 | 32 | 2.59B | 130M | ~24GB |
-
-## 🚀 BrainGPT V2: 주요 개선사항
-
-### 성능 비교
-
-| 지표 | BrainGPT V1 | BrainGPT V2 | 개선율 |
-|------|-------------|-------------|--------|
-| 학습 속도 | 기준 | 3-5배 빠름 | 🚀 300-500% |
-| 메모리 사용량 | 24GB | 8-12GB | 💾 50-67% 감소 |
-| 추론 속도 | 45 tok/s | 200+ tok/s | ⚡ 4-5배 빠름 |
-| Loss 안정성 | 불안정 | 안정 | ✅ 해결됨 |
-| 퓨샷 학습 | 없음 | 지원 | 🧠 새로운 기능 |
-
-### 주요 아키텍처 변경사항
-
-**V2에서 수정된 V1 문제점:**
-- ❌ 가짜 희소성 → ✅ Mamba SSM으로 진정한 희소 연산
-- ❌ 비효율적인 attention → ✅ 선택적 attention (10% 토큰)
-- ❌ 메모리 시스템 없음 → ✅ Hebbian 학습이 있는 에피소드 메모리
-- ❌ 고정된 연산 → ✅ 적응형 연산 시간
-- ❌ 나쁜 gradient 흐름 → ✅ 효율적인 gradient 전파
-
-### V2 빠른 시작
-
-```bash
-# V2로 학습 (권장)
-uv run brain_gpt/training/train_brain_gpt_v2.py --no-wandb
-
-# 특정 설정으로 학습
-uv run brain_gpt/training/train_brain_gpt_v2.py \
-  --batch-size 8 \
-  --learning-rate 6e-4 \
-  --max-steps 5000 \
-  --compile  # 추가 속도를 위해 PyTorch 2.0 컴파일 사용
-
-# V1 vs V2 성능 비교
-uv run benchmark_v1_vs_v2.py
-```
-
-## 🎯 사용법
-
-### 데이터셋 준비
-
-Brain-Inspired GPT는 최신 고품질 데이터셋을 지원합니다:
-
-```bash
-# 빠른 시작 (검증된 데이터셋으로)
-uv run quick_prepare_datasets.py
-
-# 또는 개별 데이터셋 준비:
-# Wikipedia (영어 + 한국어)
-uv run data/openwebtext/prepare_simple.py
-
-# 한국어 데이터셋 (KLUE, KorQuAD)
-uv run brain_gpt/training/prepare_korean_hf_datasets.py
-
-# C4 데이터셋 (고품질 영어)
-uv run data/openwebtext/prepare_c4.py --max-samples 50000
-```
-
-### 모델 학습
-
-```bash
-# 테스트용 소형 모델
-uv run brain_gpt/training/train_simple.py
-
-# 한국어 언어 모델
-uv run brain_gpt/training/train_korean.py
-
-# 다국어 학습 (권장)
-uv run brain_gpt/training/train_multilingual.py --data-dirs data/simple data/korean_hf
-
-# RTX 3090 최적화 학습
-uv run brain_gpt/training/train_brain_gpt_3090.py
-
-# 전체 모델 (24GB+ VRAM 필요)
-uv run brain_gpt/training/train_brain_gpt.py
-```
-
-### 텍스트 생성
-
-```python
-from brain_gpt import BrainGPT, BrainGPTConfig
-from brain_gpt.core.multilingual_tokenizer import MultilingualBrainTokenizer
-
-# 모델 로드
-config = BrainGPTConfig()
-model = BrainGPT.from_pretrained("checkpoints/brain_gpt_3090_best.pt")
-tokenizer = MultilingualBrainTokenizer()
-
-# 영어 텍스트 생성
-prompt = "The future of AI is"
-tokens = tokenizer.encode(prompt)
-output = model.generate(tokens, max_new_tokens=50, temperature=0.8)
-print(tokenizer.decode(output))
-
-# 한국어 생성
-prompt_ko = "인공지능의 미래는"
-tokens_ko = tokenizer.encode(prompt_ko, language='ko')
-output_ko = model.generate(tokens_ko, max_new_tokens=50, temperature=0.8)
-print(tokenizer.decode(output_ko))
-```
-
-## 🏗️ 프로젝트 구조
-
-```
-brain-inspired-gpt/
-├── brain_gpt/
-│   ├── core/                 # 핵심 모델 구현
-│   │   ├── model_brain.py         # Brain-Inspired GPT 메인 모델
-│   │   ├── sparse_layers.py       # 95% sparse layers (CUDA 지원)
-│   │   ├── attention_dendritic.py # Dendritic attention mechanism
-│   │   └── multilingual_tokenizer.py # 다국어 tokenizer (한국어/영어/다국어)
-│   ├── training/             # 학습 스크립트
-│   │   ├── train_simple.py        # 빠른 데모 학습
-│   │   ├── train_korean.py        # 한국어 특화 학습
-│   │   ├── train_multilingual.py  # 다국어 균형 학습
-│   │   └── train_brain_gpt_3090.py # RTX 3090 최적화
-│   ├── tests/                # 종합 테스트
-│   └── docs/                 # 추가 문서
-├── data/                     # 데이터셋
-│   ├── korean_hf/               # 한국어 데이터셋 (KLUE, KorQuAD)
-│   ├── openwebtext/             # 데이터셋 준비 스크립트
-│   │   ├── prepare_simple.py      # Wikipedia 데이터셋
-│   │   ├── prepare_c4.py          # C4 데이터셋 준비
-│   │   └── prepare_korean_hf_datasets.py # 한국어 데이터셋
-│   ├── simple/                  # Wikipedia 데이터셋
-│   ├── c4/                      # Common Crawl 정제본
-│   └── [dataset_name]/          # 기타 데이터셋
-├── checkpoints/              # 저장된 모델
-├── quick_prepare_datasets.py # 빠른 데이터셋 준비
-├── test_multilingual.py      # 다국어 기능 테스트
-├── test_training_quick.py    # 빠른 학습 테스트
-├── DATA_GUIDE.md            # 상세 데이터셋 가이드
-├── pyproject.toml           # 프로젝트 설정
-└── uv.lock                  # 고정된 의존성
-```
-
-## 🧪 테스트 실행
-
-```bash
-# 모든 테스트 실행
-uv run brain_gpt/tests/run_all_tests.py
-
-# 특정 테스트 스위트 실행
-uv run brain_gpt/tests/comprehensive_test.py
-
-# 모델 기능 검증
-uv run validate_brain_gpt.py
-
-# 다국어 생성 테스트
-uv run test_multilingual.py
-```
-
-## 📚 문서
-
-- **주요 문서**: 이 README에 모든 필수 정보 포함
-- **데이터셋 가이드**: 자세한 데이터셋 정보는 [DATA_GUIDE.md](DATA_GUIDE.md) 참조
-- **영어 버전**: [README.md](README.md)에서 영어 문서 확인
-
-## 🌏 다국어 지원
-
-Brain-Inspired GPT는 포괄적인 다국어 기능을 제공합니다:
-
-### 지원 언어
-- **주요 언어**: 한국어, 영어
-- **추가 언어**: 독일어, 프랑스어, 스페인어, 이탈리아어 (RedPajama-v2)
-- **확장 가능**: 새로운 언어 추가 용이
-
-### 언어 기능
-- **자동 감지**: 혼합 텍스트의 스마트 언어 감지
-- **균형 학습**: 동등한 언어 표현을 위한 옵션
-- **언어 마커**: 학습 중 언어 간 명확한 분리
-- **교차 언어**: 코드 스위칭 및 혼합 언어 입력 처리
-
-### 데이터셋 통계
-- **한국어**: KLUE, KorQuAD, 병렬 말뭉치에서 5천만 개 이상의 토큰
-- **영어**: FineWeb, Wikipedia, RedPajama에서 15T 이상의 토큰
-- **다국어**: 5개 언어에 걸친 30T 토큰 (RedPajama-v2)
-
-## 🏗️ 모델 아키텍처 다이어그램
+### 🏛️ 아키텍처
 
 ```mermaid
 graph TB
-    subgraph "Brain-Inspired GPT Architecture"
-        Input[Input Tokens] --> Embed[Token Embedding<br/>+ Positional Encoding]
+    subgraph "CortexGPT 모델"
+        Input["📥 입력 레이어<br/>• 다국어 토크나이저<br/>• 한국어/영어 지원<br/>• BPE 인코딩"]
         
-        Embed --> CC1[Cortical Columns Layer 1<br/>32 columns × 64 neurons]
+        Transformer["🤖 트랜스포머 코어<br/>• 멀티 헤드 어텐션<br/>• 피드 포워드 네트워크<br/>• 레이어 정규화<br/>• 잔차 연결"]
         
-        subgraph "Cortical Column Details"
-            CC1 --> SA1[Sparse Attention<br/>95% Sparsity]
-            SA1 --> DA1[Dendritic Attention<br/>4 dendrites/neuron]
-            DA1 --> LI1[Lateral Inhibition<br/>Column Competition]
-            LI1 --> MLP1[Sparse MLP<br/>2:4 Structured Sparsity]
+        subgraph "메모리 시스템"
+            STM["💭 STM (단기 기억)<br/>• 용량: 64<br/>• 빠른 접근<br/>• 최근 상호작용"]
+            LTM["🧠 LTM (장기 기억)<br/>• 용량: 10,000<br/>• 통합된 지식<br/>• 빈번한 패턴"]
+            Archive["📚 Archive (보관 메모리)<br/>• 용량: 100,000<br/>• 압축 저장<br/>• 드물게 사용되는 지식"]
         end
         
-        MLP1 --> EE1{Early Exit?<br/>Confidence Check}
-        EE1 -->|No| CC2[Cortical Columns Layer 2]
-        EE1 -->|Yes| Output1[Generate Output]
+        Learner["🎓 실시간 학습기<br/>• 온라인 학습<br/>• 메모리 통합<br/>• 자기 평가"]
         
-        CC2 --> SA2[Sparse Attention]
-        SA2 --> DA2[Dendritic Attention]
-        DA2 --> LI2[Lateral Inhibition]
-        LI2 --> MLP2[Sparse MLP]
-        
-        MLP2 --> EE2{Early Exit?}
-        EE2 -->|No| CCN[...]
-        EE2 -->|Yes| Output2[Generate Output]
-        
-        CCN --> Final[Final Layer<br/>Cortical Columns]
-        Final --> Output[Output Tokens]
+        Output["📤 출력 레이어<br/>• 토큰 생성<br/>• 신뢰도 점수<br/>• 언어 감지"]
     end
     
-    subgraph "Developmental Stages"
-        S1[Stage 1: 2 Layers<br/>Basic Patterns]
-        S2[Stage 2: 4 Layers<br/>Simple Language]
-        S3[Stage 3: 8 Layers<br/>Complex Reasoning]
-        S4[Stage 4: 12 Layers<br/>Abstract Thinking]
-        S5[Stage 5: All Layers<br/>Full Capacity]
-        
-        S1 --> S2 --> S3 --> S4 --> S5
-    end
+    Input --> |"인코딩된 토큰"| Transformer
+    Transformer --> |"컨텍스트 저장"| STM
+    STM --> |"통합<br/>(자주 사용)"| LTM
+    LTM --> |"보관<br/>(드물게 사용)"| Archive
+    STM --> |"현재 컨텍스트"| Learner
+    LTM --> |"검색된 지식"| Learner
+    Learner --> |"가중치 업데이트"| Transformer
+    Transformer --> |"예측"| Output
+    Learner -.-> |"업데이트"| STM
+    Learner -.-> |"전송"| LTM
     
-    style Input fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
-    style Output fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
-    style Output1 fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
-    style Output2 fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
-    style SA1 fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
-    style SA2 fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
-    style DA1 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style DA2 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style LI1 fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
-    style LI2 fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
-    style MLP1 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
-    style MLP2 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    style Input fill:#e6f3ff
+    style Transformer fill:#e6f3ff
+    style STM fill:#ffe6e6
+    style LTM fill:#e6ffe6
+    style Archive fill:#e6e6ff
+    style Learner fill:#e6f3ff
+    style Output fill:#e6f3ff
 ```
 
-### 세부 컴포넌트 구조
+### 🌟 핵심 특징
 
-```mermaid
-graph LR
-    subgraph "Sparse Attention Mechanism"
-        Q[Query] --> Mask[Magnitude Mask<br/>Top 5%]
-        K[Key] --> Mask
-        V[Value] --> Mask
-        Mask --> Attn[Sparse Attention<br/>Computation]
-        Attn --> Out1[Attention Output]
-    end
-    
-    subgraph "Dendritic Attention Flow"
-        Input2[Neuron Input] --> D1[Dendrite 1]
-        Input2 --> D2[Dendrite 2]
-        Input2 --> D3[Dendrite 3]
-        Input2 --> D4[Dendrite 4]
-        
-        D1 --> Gate1[Gating<br/>Function]
-        D2 --> Gate2[Gating<br/>Function]
-        D3 --> Gate3[Gating<br/>Function]
-        D4 --> Gate4[Gating<br/>Function]
-        
-        Gate1 --> Sum[Weighted<br/>Sum]
-        Gate2 --> Sum
-        Gate3 --> Sum
-        Gate4 --> Sum
-        
-        Sum --> Out2[Dendritic Output]
-    end
-    
-    subgraph "Cortical Column Structure"
-        N1[Neurons<br/>1-16] --> Col1[Column 1]
-        N2[Neurons<br/>17-32] --> Col2[Column 2]
-        N3[Neurons<br/>33-48] --> Col3[Column 3]
-        NN[...] --> ColN[Column 32]
-        
-        Col1 <--> Col2
-        Col2 <--> Col3
-        Col3 <--> ColN
-        
-        Col1 --> Comp[Competition<br/>via Lateral<br/>Inhibition]
-        Col2 --> Comp
-        Col3 --> Comp
-        ColN --> Comp
-    end
-    
-    style Q fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
-    style K fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
-    style V fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
-    style D1 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style D2 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style D3 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style D4 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style Col1 fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
-    style Col2 fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
-    style Col3 fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
-    style ColN fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
+- **실시간 학습**: 훈련/추론 구분 없이 지속적으로 학습
+- **인간과 유사한 메모리**: STM(단기) → LTM(장기) → Archive(보관) 시스템
+- **자기 개선**: 스스로 평가하고 개선하는 메커니즘
+- **다국어 지원**: 한국어와 영어를 자연스럽게 처리
+- **메모리 효율성**: OOM 방지를 위한 적응형 배치 크기 조정
+- **체크포인트 지원**: 중단 후 훈련 재개 가능
+
+### 🚀 빠른 시작
+
+#### 1. 설치
+
+```bash
+# 저장소 클론
+git clone https://github.com/comsa33/cortexgpt.git
+cd cortexgpt
+
+# 모든 의존성 설치
+uv sync
+
+# 또는 모니터링 도구 포함 설치
+uv sync --extra monitoring
 ```
 
-## 🔬 기존 Transformer와의 차별점
+#### 2. 데모 데이터 생성
 
-### 1. Sparse Activation Pattern
-- **기존 Transformer**: 모든 뉴런이 dense하게 활성화 (100% activation)
-- **Brain-Inspired GPT**: 각 forward pass에서 5%만 활성화 (95% sparsity)
-- **구현 방식**: Magnitude-based pruning과 structured sparsity (2:4 pattern for RTX GPUs)
+```bash
+# 데모 훈련 데이터 생성
+uv run scripts/data/create_demo_data.py
+```
 
-### 2. Cortical Column Architecture
-- **기존 Transformer**: Flat layer structure with uniform processing
-- **Brain-Inspired GPT**: Modular cortical columns (32 columns × 64 neurons)
-- **특징**: Lateral inhibition을 통한 column 간 competition, local processing 강화
+#### 3. 기본 기능 테스트
 
-### 3. Dendritic Attention Mechanism
-- **기존 Transformer**: Single attention pathway per head
-- **Brain-Inspired GPT**: Multiple dendrites per neuron (4 dendrites default)
-- **효과**: Context-dependent sparse routing, biologically plausible gradient flow
+```bash
+# 토크나이저 테스트
+uv run tests/demo_tokenizer.py
 
-### 4. Developmental Stage Training
-- **기존 Transformer**: Fixed architecture throughout training
-- **Brain-Inspired GPT**: 5-stage progressive growth mimicking human development
-- **Stage 구성**:
-  - Stage 1: Basic pattern recognition (2 layers)
-  - Stage 2: Simple language understanding (4 layers)
-  - Stage 3: Complex reasoning (8 layers)
-  - Stage 4: Abstract thinking (12 layers)
-  - Stage 5: Full capacity (all layers)
+# 모델 학습 가능 여부 테스트 (과적합 테스트)
+uv run tests/test_overfit.py
+```
 
-### 5. Early Exit Mechanism
-- **기존 Transformer**: 모든 layer를 거쳐야 출력 생성
-- **Brain-Inspired GPT**: Confidence 기반 early exit (평균 40% layer만 사용)
-- **이점**: Dynamic computation allocation, energy efficiency
+#### 4. 훈련
 
-## 💡 주요 연구 내용
+```bash
+# 빠른 데모 훈련 (작은 모델, 빠름)
+uv run cortexgpt/training/train_realtime.py \
+    --dataset demo \
+    --dim 256 \
+    --lr 1e-3 \
+    --epochs 20
 
-### 1. Extreme Sparsity (95%)
-- 전체 뉴런의 5%만 동시 활성화
-- 생물학적 뇌의 sparse coding 원리 적용
-- 20배 파라미터 감소를 통한 효율성 검증
+# wandb로 모니터링
+uv run cortexgpt/training/train_realtime.py \
+    --dataset demo \
+    --dim 512 \
+    --wandb
 
-### 2. Cortical Columns
-- Neocortex의 modular processing unit 구현
-- 32 columns × 64 neurons 구성
-- Lateral inhibition을 통한 competition mechanism
+# 실제 데이터셋으로 훈련 (설정 후)
+uv run scripts/data/setup_datasets.py  # 데이터셋 다운로드 및 준비
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --batch-size 4 \
+    --gradient-accumulation 8 \
+    --epochs 50 \
+    --wandb
 
-### 3. Dendritic Attention
-- 뉴런당 multiple dendrites 구현
-- Sparse, context-dependent routing
-- Biologically plausible credit assignment
+# 중단된 훈련 재개
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --resume auto
+```
 
-### 4. Developmental Learning
-- 5단계 curriculum learning 적용
-- Progressive architectural growth
-- Human cognitive development 모방 시도
+#### 5. 데모 실행
 
-## 🛠️ 고급 구성
+```bash
+# 최소 생성 데모
+uv run scripts/demos/minimal_demo.py
 
-### 커스텀 모델 구성
+# 실시간 학습 데모
+uv run scripts/demos/learning_effect_demo.py
+
+# 대화형 채팅 데모
+uv run scripts/demos/natural_language_demo.py
+```
+
+### 📖 상세 사용 가이드
+
+#### 사전 훈련된 모델 사용하기
+
+```bash
+# 체크포인트를 로드하고 텍스트 생성
+uv run cortexgpt/inference/generate.py \
+    --checkpoint checkpoints/best_model.pt \
+    --prompt "인공지능의 미래는" \
+    --max-length 100
+
+# 훈련된 모델로 대화형 채팅
+uv run cortexgpt/inference/chat.py \
+    --checkpoint checkpoints/best_model.pt \
+    --temperature 0.8
+```
+
+#### 실시간 학습 데모
+
+실시간 학습 데모는 CortexGPT가 상호작용을 통해 어떻게 학습하는지 보여줍니다:
+
+```bash
+# 학습 효과 데모 실행
+uv run scripts/demos/learning_effect_demo.py
+```
+
+이 데모는 다음을 보여줍니다:
+- 지식 없이 초기 응답
+- 사용자 피드백으로부터 학습
+- 학습 후 개선된 응답
+- 시간에 따른 메모리 통합
+
+#### 커스텀 훈련
+
+커스텀 데이터셋의 경우, JSONL 파일로 데이터를 생성하세요:
+
+```json
+{"text": "여기에 훈련 텍스트를 입력하세요"}
+{"text": "또 다른 훈련 예제"}
+```
+
+그런 다음 훈련:
+
+```bash
+# 커스텀 데이터셋 준비
+uv run cortexgpt/data/prepare_custom.py \
+    --input your_data.jsonl \
+    --output data/custom
+
+# 커스텀 데이터로 훈련
+uv run cortexgpt/training/train_realtime.py \
+    --dataset custom \
+    --vocab-size 30000 \
+    --epochs 50
+```
+
+#### 메모리 시스템 설정
+
+다양한 사용 사례에 맞게 메모리 시스템 매개변수를 조정하세요:
+
+```bash
+# 빠른 실험을 위한 작은 메모리
+uv run cortexgpt/training/train_realtime.py \
+    --stm-capacity 32 \
+    --ltm-capacity 1000 \
+    --archive-capacity 10000
+
+# 프로덕션을 위한 큰 메모리
+uv run cortexgpt/training/train_realtime.py \
+    --stm-capacity 128 \
+    --ltm-capacity 50000 \
+    --archive-capacity 500000
+```
+
+#### API 사용법
 
 ```python
-from brain_gpt import BrainGPTConfig
+from cortexgpt import CortexGPT, MultilingualTokenizer
 
-config = BrainGPTConfig()
-config.n_layer = 12
-config.n_head = 16
-config.n_embd = 1024
-config.sparsity_base = 0.95  # 95% 희소성
-config.n_cortical_columns = 32
-config.column_size = 32  # 32 * 32 = 1024
-config.gradient_checkpointing = True  # 메모리 효율성을 위해
+# 모델과 토크나이저 초기화
+model = CortexGPT.from_pretrained("checkpoints/best_model.pt")
+tokenizer = MultilingualTokenizer.from_pretrained("checkpoints/tokenizer.json")
+
+# 텍스트 생성
+prompt = "기계 학습이란"
+inputs = tokenizer.encode(prompt)
+outputs = model.generate(inputs, max_length=100)
+response = tokenizer.decode(outputs)
+print(response)
+
+# 실시간 학습
+from cortexgpt.learning import RealTimeLearner
+
+learner = RealTimeLearner(model, tokenizer)
+learner.start()  # 백그라운드 학습 시작
+
+# 학습과 함께 쿼리 처리
+response, metadata = learner.process_query(
+    "기계 학습이란 무엇인가요?",
+    learn=True
+)
+print(f"응답: {response}")
+print(f"신뢰도: {metadata['confidence']}")
 ```
 
-### 커스텀 데이터로 학습
+#### 훈련 모니터링
+
+Weights & Biases를 사용하여 상세한 모니터링:
 
 ```bash
-# 빠른 데이터셋 준비 (처음 사용자 권장)
-uv run prepare_all_datasets.py --datasets korean wikipedia
+# 먼저 wandb에 로그인
+wandb login
 
-# 모든 데이터셋을 한 번에 준비 (대용량 다운로드)
-uv run prepare_all_datasets.py --datasets all --max-samples 100000
-
-# 특정 구성으로 학습
-uv run brain_gpt/training/train_multilingual.py \
-  --data-dirs data/simple data/fineweb data/korean_hf \
-  --language-sampling balanced \
-  --batch-size 4 \
-  --learning-rate 3e-4
-
-# 또는 단일 데이터셋으로 학습
-uv run brain_gpt/training/train_brain_gpt_3090.py \
-  --data-dir data/fineweb \
-  --batch-size 4 \
-  --max-steps 10000
+# 모니터링과 함께 훈련
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --wandb \
+    --wandb-project "cortexgpt-experiments" \
+    --wandb-name "run-001"
 ```
 
-## 📚 사용 가능한 데이터셋
+모니터링 항목:
+- 훈련/검증 손실
+- 학습률 스케줄
+- 메모리 시스템 사용량
+- 샘플 생성
+- 성능 메트릭
 
-Brain-Inspired GPT는 다양한 고품질 데이터셋으로 학습을 지원합니다:
+### 🌍 실제 데이터셋으로 훈련하기
 
-### 🌐 작동하는 데이터셋
-
-| 데이터셋 | 크기 | 언어 | 상태 | 설명 |
-|---------|------|------|------|------|
-| **한국어 데이터셋** | 50M+ 토큰 | KO | ✅ 작동 | KLUE, KorQuAD, 병렬 말뭉치 |
-| **Wikipedia** | ~20B 토큰 | 300개 이상 언어 | ✅ 작동 | 백과사전 콘텐츠 |
-| **C4** | ~750GB | EN | ✅ 작동 | 정제된 Common Crawl |
-| **Simple Mix** | 100M+ 토큰 | KO+EN | ✅ 작동 | Wikipedia 혼합 데이터셋 |
-
-### 🚧 개발 중인 데이터셋
-
-| 데이터셋 | 크기 | 언어 | 문제 |
-|---------|------|------|------|
-| **RedPajama-v2** | 30T 토큰 | 다국어 | API 변경 |
-| **FineWeb** | 15T 토큰 | EN | 데이터셋 구조 변경 |
-
-### 🔧 데이터셋 기능
-
-- **품질 필터링**: perplexity, 교육적 가치, 콘텐츠 품질 기반 고급 필터링
-- **언어 감지**: 자동 언어 감지 및 적절한 tokenization
-- **균형 잡힌 샘플링**: 학습 중 언어 균형 옵션
-- **메모리 효율성**: 대규모 데이터셋을 위한 스트리밍 지원
-- **쉬운 통합**: 간단한 명령으로 데이터셋 다운로드 및 준비
-
-### 📊 권장 구성
+#### 1단계: 데이터셋 다운로드
 
 ```bash
-# 균형 잡힌 다국어 모델
-uv run quick_prepare_datasets.py
-uv run brain_gpt/training/train_multilingual.py --language-sampling balanced
-
-# 고품질 영어 모델
-uv run data/openwebtext/prepare_c4.py --max-samples 100000
-uv run brain_gpt/training/train_brain_gpt_3090.py --data-dir data/c4
-
-# 한국어 중심 모델
-uv run brain_gpt/training/prepare_korean_hf_datasets.py
-uv run brain_gpt/training/train_korean.py
+# 샘플 데이터셋 다운로드 (KLUE, 위키피디아 등)
+uv run cortexgpt/data/download_datasets.py
 ```
 
-## 📈 성능
+다음 데이터셋의 샘플을 다운로드합니다:
+- **KLUE**: 한국어 언어 이해 평가 데이터셋
+- **한국어 위키피디아**: 한국어 백과사전 문서
+- **영어 위키피디아**: 영어 백과사전 문서
+- **OpenWebText**: 웹 크롤링 데이터 (샘플)
 
-### 벤치마크 (RTX 3090)
+#### 2단계: 데이터셋 준비 (선택사항)
 
-| 지표 | Small (60M) | Medium (221M) | Large (495M) |
-|------|-------------|---------------|--------------|
-| 퍼플렉시티 | 32.4 | 24.7 | 19.8 |
-| 학습 속도 | 12K tok/s | 8K tok/s | 4K tok/s |
-| 추론 속도 | 120 tok/s | 85 tok/s | 45 tok/s |
-| 메모리 사용량 | 0.5GB | 2.8GB | 6.2GB |
-
-### 예상 효율성 (연구 목표)
-- Dense 모델 대비 **95% 적은 active parameters**
-- Sparse kernel 활용 시 **10-20배 빠른 inference** 목표
-- Edge deployment를 위한 **5-10배 memory 감소** 기대
-
-## 🤝 기여하기
-
-기여를 환영합니다! 자세한 내용은 [기여 가이드](CONTRIBUTING.md)를 참조하세요.
-
-### 개발 환경 설정
+훈련 스크립트는 JSONL 파일을 자동으로 처리하지만, 더 빠른 로딩을 위해 사전 처리할 수 있습니다:
 
 ```bash
-# 개발 환경 복제 및 설정
-git clone https://github.com/comsa33/brain-inspired-gpt.git
-cd brain-inspired-gpt
-
-# 개발 도구를 포함한 모든 종속성 설치
-uv sync --all-extras
-
-# PR 제출 전 테스트 실행
-uv run pytest
-uv run black .
-uv run isort .
+# 다운로드한 모든 데이터셋 준비
+uv run cortexgpt/data/prepare_datasets.py
 ```
 
-## 📄 라이선스
+#### 3단계: 실제 데이터로 훈련
 
-이 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다 - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+##### 한국어 데이터셋 (KLUE)
+```bash
+# KLUE 데이터셋으로 훈련
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --dim 512 \
+    --vocab-size 30000 \
+    --batch-size 8 \
+    --gradient-accumulation 4 \
+    --lr 3e-4 \
+    --epochs 10 \
+    --wandb
+```
 
-## 🙏 Acknowledgments
+##### 영어 데이터셋 (위키피디아)
+```bash
+# 영어 위키피디아로 훈련
+uv run cortexgpt/training/train_realtime.py \
+    --dataset wikipedia \
+    --dim 512 \
+    --vocab-size 30000 \
+    --batch-size 8 \
+    --gradient-accumulation 4 \
+    --lr 3e-4 \
+    --epochs 10 \
+    --wandb
+```
 
-- Cortical columns와 sparse coding 관련 neuroscience 연구에서 영감을 받음
-- PyTorch와 Triton을 활용한 efficient sparse operations 구현
-- KLUE 및 KorQuAD 프로젝트의 한국어 데이터셋 활용
+##### 한국어-영어 혼합 훈련
+```bash
+# 결합된 데이터셋으로 훈련
+uv run cortexgpt/training/train_realtime.py \
+    --dataset combined \
+    --korean-ratio 0.4 \
+    --dim 768 \
+    --vocab-size 50000 \
+    --batch-size 4 \
+    --gradient-accumulation 8 \
+    --lr 2e-4 \
+    --epochs 20 \
+    --wandb
+```
 
-## 📮 연락처
+#### 4단계: 훈련 재개
 
-- 이슈: [GitHub Issues](https://github.com/comsa33/brain-inspired-gpt/issues)
-- 이메일: comsa333@gmail.com
+훈련이 중단된 경우:
+
+```bash
+# 최신 체크포인트에서 재개
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --resume auto \
+    --wandb
+
+# 특정 체크포인트에서 재개
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --resume checkpoints/realtime/model_best.pt \
+    --wandb
+```
+
+#### 훈련 팁
+
+1. **작게 시작하기**: 테스트를 위해 `--dim 256`과 `--vocab-size 10000`으로 시작
+2. **메모리 모니터링**: OOM 발생 시 `--batch-size 2`를 사용하고 `--gradient-accumulation` 증가
+3. **학습률**: 작은 모델은 `1e-3`, 큰 모델은 `3e-4`로 시작
+4. **어휘 크기**: 
+   - 한국어만: 20,000-30,000
+   - 영어만: 30,000-40,000
+   - 혼합: 40,000-50,000
+
+### 📊 사용 가능한 데이터셋
+
+| 데이터셋 | 언어 | 설명 |
+|---------|------|------|
+| `demo` | 혼합 | 작은 테스트 데이터셋 (기본값) |
+| `klue` | 한국어 | 한국어 언어 이해 평가 |
+| `wikipedia` | 영어 | 위키피디아 문서 |
+| `korean_wiki` | 한국어 | 한국어 위키피디아 |
+| `openwebtext` | 영어 | GPT-2 훈련용 웹 텍스트 |
+| `combined` | 혼합 | 여러 데이터셋 조합 |
+
+### 🏗️ 프로젝트 구조
+
+```
+my-efficient-gpt/
+├── cortexgpt/              # 메인 패키지
+│   ├── models/            # 모델 아키텍처
+│   ├── learning/          # 실시간 학습 시스템
+│   ├── tokenization/      # 다국어 토크나이저
+│   ├── data/             # 데이터 로딩 유틸리티
+│   └── training/         # 훈련 스크립트
+├── scripts/
+│   ├── data/             # 데이터 준비 스크립트
+│   └── demos/            # 데모 애플리케이션
+├── tests/                # 테스트 스크립트
+├── docs/                 # 문서
+└── data/                 # 훈련 데이터
+```
+
+### 💡 작동 원리
+
+#### 메모리 흐름
+```
+새로운 입력 → STM (빠른 접근)
+     ↓ (자주 사용)
+    LTM (통합된 지식)
+     ↓ (오래 미사용)
+   Archive (압축 저장)
+```
+
+#### 학습 과정
+1. **첫 질문**: "아직 학습하지 못한 내용입니다"
+2. **학습 후**: 정확한 답변 제공
+3. **반복 시**: 신뢰도 증가 (0.6 → 0.9 → 1.0)
+
+### 📈 훈련 옵션
+
+```bash
+# 모델 아키텍처
+--dim               # 히든 차원 (256/512/768, 기본값: 768)
+--vocab-size        # 토크나이저 어휘 크기 (기본값: 50000)
+
+# 훈련 파라미터
+--batch-size        # 배치 크기 (기본값: 8)
+--gradient-accumulation  # 그래디언트 누적 단계 (기본값: 4)
+--epochs           # 에폭 수 (기본값: 10)
+--lr              # 학습률 (기본값: 3e-4)
+
+# 메모리 시스템
+--stm-capacity     # 단기 기억 용량 (기본값: 64)
+--ltm-capacity     # 장기 기억 용량 (기본값: 10000)
+--archive-capacity # 보관 용량 (기본값: 100000)
+
+# 모니터링 및 체크포인팅
+--wandb           # Weights & Biases 로깅 활성화
+--wandb-project   # W&B 프로젝트 이름
+--checkpoint-dir  # 체크포인트 디렉토리
+--resume         # 체크포인트에서 재개 (auto/경로)
+```
+
+### 🚀 권장 훈련 설정
+
+#### 테스트 및 개발
+```bash
+# 빠른 테스트를 위한 작은 모델
+--dim 256 --lr 1e-3 --batch-size 4 --epochs 20
+```
+
+#### 데모 훈련
+```bash
+# 데모를 위한 중간 모델
+--dim 512 --lr 5e-4 --batch-size 8 --gradient-accumulation 4
+```
+
+#### 프로덕션 훈련
+```bash
+# 실제 훈련을 위한 큰 모델
+--dim 768 --lr 3e-4 --batch-size 4 --gradient-accumulation 8 --wandb
+```
+
+### 🔬 연구 및 개발
+
+CortexGPT는 여러 신경과학 개념을 구현합니다:
+
+- **헤비안 학습**: "함께 발화하는 뉴런은 함께 연결된다"
+- **메모리 통합**: STM에서 LTM으로의 점진적 전이
+- **선택적 주의**: 관련 정보에 집중
+- **지속적 학습**: 잊지 않고 새로운 작업 학습
+
+### 📝 인용
+
+```bibtex
+@software{cortexgpt2024,
+  author = {Ruo Lee},
+  title = {CortexGPT: Real-time Learning Language Model},
+  year = {2025},
+  email = {comsa333@gmail.com}
+}
+```
+
+### 📄 라이선스
+
+MIT 라이선스 - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
 ---
 
-<div align="center">
-Ruo Lee가 ❤️를 담아 만듦
-</div>
+Made with ❤️ by Ruo Lee

@@ -19,8 +19,9 @@ out-*/
 *.bin
 *.npy
 *.npz
-data/openwebtext/*.bin
-data/korean/*.bin
+data/datasets/*/prepared/
+data/datasets/*/data.jsonl
+!data/*.jsonl  # Keep demo data
 
 # Logs
 *.log

@@ -1,583 +1,486 @@
-# 🧠 Brain-Inspired GPT
-
 <div align="center">
+
+# 🧠 CortexGPT
+
+**Real-time Learning Language Model Inspired by Human Brain**
 
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)
-![CUDA](https://img.shields.io/badge/CUDA-11.8+-76b900.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Model Size](https://img.shields.io/badge/model-60M--2.5B-purple.svg)
-![Sparsity](https://img.shields.io/badge/sparsity-95%25-orange.svg)
+![Model Size](https://img.shields.io/badge/model-768D-purple.svg)
+![Memory](https://img.shields.io/badge/memory-STM→LTM→Archive-orange.svg)
 
 [English](#english) | [한국어](README_KR.md)
 
 </div>
 
-## 🌟 Overview
+## English
 
-Brain-Inspired GPT is a research project exploring whether language models can achieve comparable performance to dense models while using only 5% of active parameters, mimicking the sparse activation patterns of the human brain. This project investigates the potential for 95% sparsity in neural networks, aiming to enable efficient edge deployment and advance our understanding of biologically-inspired AI architectures.
-
-### 📢 Latest Updates
-- 🚀 **BrainGPT V2 Released**: Major performance improvements with true sparse computation
-- ✅ **3-5x Faster Training**: Mamba SSM blocks replace inefficient sparse attention
-- 🧠 **Episodic Memory**: Few-shot learning capability with Hebbian updates
-- ⚡ **Adaptive Computation**: Dynamic computation allocation for efficiency
-- ✅ **Multilingual Training Fixed**: Resolved batch size mismatch issues
-- ✅ **Working Datasets**: Korean (KLUE/KorQuAD), Wikipedia, C4 datasets ready to use
-
-### ✨ Key Features
-
-**BrainGPT V2 (New!)**
-- **🚀 Mamba SSM**: Linear-time sequence processing replacing quadratic attention
-- **💾 Episodic Memory**: Few-shot learning with Hebbian synaptic updates
-- **⏱️ Adaptive Computation**: Dynamic computation steps based on input complexity
-- **🎯 Selective Attention**: Attention only on critical tokens (10% sparsity)
-- **⚡ True Efficiency**: 3-5x faster training, 50% less memory usage
-
-**Original Features**
-- **🧠 Brain-Like Sparsity**: 95% sparse activation mimicking biological neural networks
-- **🏛️ Cortical Columns**: Modular architecture inspired by neocortex organization
-- **🌏 Multilingual**: Korean + English support with extensible tokenizer
-- **📈 Developmental Learning**: Progressive complexity through curriculum learning
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.11+
-- NVIDIA GPU with CUDA 11.8+ (RTX 3090 recommended)
-- 24GB+ VRAM for full model, 8GB+ for small models
-
-### Installation with uv
-
-This project uses [uv](https://github.com/astral-sh/uv) for fast, reliable Python package management.
-
-```bash
-# Install uv if you haven't already
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Clone the repository
-git clone https://github.com/comsa33/brain-inspired-gpt.git
-cd brain-inspired-gpt
-
-# Install all dependencies (automatically creates venv)
-uv sync
-
-# Quick validation
-uv run validate_brain_gpt.py
-
-# Run interactive demo
-uv run brain_gpt/quickstart.py
-
-# Try the new V2 model (recommended)
-uv run brain_gpt/training/train_brain_gpt_v2.py --data-dir data/simple --no-wandb
-
-# Benchmark V1 vs V2
-uv run benchmark_v1_vs_v2.py
-```
-
-**Why uv?**
-- ⚡ 10-100x faster than pip
-- 🔒 Automatic dependency resolution with lockfile
-- 🎯 Single command for all dependencies
-- 🔧 Built-in virtual environment management
-
-## 📊 Model Architectures
-
-| Model | Layers | Hidden | Heads | Total Params | Effective (5%) | VRAM Usage |
-|-------|--------|--------|-------|--------------|----------------|------------|
-| Small | 6 | 512 | 8 | 60.1M | 3.0M | ~0.5GB |
-| Medium | 12 | 1024 | 16 | 221.8M | 11.1M | ~2.8GB |
-| Large | 24 | 1536 | 24 | 495.2M | 24.8M | ~6.2GB |
-| XLarge | 48 | 2048 | 32 | 2.59B | 130M | ~24GB |
-
-## 🚀 BrainGPT V2: Major Improvements
-
-### Performance Comparison
-
-| Metric | BrainGPT V1 | BrainGPT V2 | Improvement |
-|--------|-------------|-------------|-------------|
-| Training Speed | Baseline | 3-5x faster | 🚀 300-500% |
-| Memory Usage | 24GB | 8-12GB | 💾 50-67% reduction |
-| Inference Speed | 45 tok/s | 200+ tok/s | ⚡ 4-5x faster |
-| Loss Stability | Unstable | Stable | ✅ Resolved |
-| Few-shot Learning | None | Supported | 🧠 New capability |
-
-### Key Architectural Changes
-
-**V1 Problems Fixed in V2:**
-- ❌ Fake sparsity → ✅ True sparse computation with Mamba SSM
-- ❌ Inefficient attention → ✅ Selective attention (10% tokens)
-- ❌ No memory system → ✅ Episodic memory with Hebbian learning
-- ❌ Fixed computation → ✅ Adaptive computation time
-- ❌ Poor gradient flow → ✅ Efficient gradient propagation
-
-### Quick Start with V2
-
-```bash
-# Train with V2 (recommended)
-uv run brain_gpt/training/train_brain_gpt_v2.py --no-wandb
-
-# Train with specific settings
-uv run brain_gpt/training/train_brain_gpt_v2.py \
-  --batch-size 8 \
-  --learning-rate 6e-4 \
-  --max-steps 5000 \
-  --compile  # Use PyTorch 2.0 compile for extra speed
-
-# Compare V1 vs V2 performance
-uv run benchmark_v1_vs_v2.py
-```
-
-## 🎯 Usage
-
-### Preparing Datasets
-
-Brain-Inspired GPT supports multiple state-of-the-art datasets:
-
-```bash
-# Quick start with working datasets (recommended)
-uv run quick_prepare_datasets.py
-
-# Or prepare individual datasets:
-# Wikipedia (English + Korean)
-uv run data/openwebtext/prepare_simple.py
-
-# Korean datasets (KLUE, KorQuAD)
-uv run brain_gpt/training/prepare_korean_hf_datasets.py
-
-# C4 dataset (high-quality English)
-uv run data/openwebtext/prepare_c4.py --max-samples 50000
-```
-
-### Training a Model
-
-```bash
-# Small model for testing
-uv run brain_gpt/training/train_simple.py
-
-# Korean language model
-uv run brain_gpt/training/train_korean.py
-
-# Multilingual training (recommended)
-uv run brain_gpt/training/train_multilingual.py --data-dirs data/simple data/korean_hf
-
-# RTX 3090 optimized training
-uv run brain_gpt/training/train_brain_gpt_3090.py
-
-# Full model (requires 24GB+ VRAM)
-uv run brain_gpt/training/train_brain_gpt.py
-```
-
-### Generating Text
-
-```python
-from brain_gpt import BrainGPT, BrainGPTConfig
-from brain_gpt.core.multilingual_tokenizer import MultilingualBrainTokenizer
-
-# Load model
-config = BrainGPTConfig()
-model = BrainGPT.from_pretrained("checkpoints/brain_gpt_3090_best.pt")
-tokenizer = MultilingualBrainTokenizer()
-
-# Generate text
-prompt = "The future of AI is"
-tokens = tokenizer.encode(prompt)
-output = model.generate(tokens, max_new_tokens=50, temperature=0.8)
-print(tokenizer.decode(output))
-
-# Korean generation
-prompt_ko = "인공지능의 미래는"
-tokens_ko = tokenizer.encode(prompt_ko, language='ko')
-output_ko = model.generate(tokens_ko, max_new_tokens=50, temperature=0.8)
-print(tokenizer.decode(output_ko))
-```
-
-## 🏗️ Project Structure
-
-```
-brain-inspired-gpt/
-├── brain_gpt/
-│   ├── core/                 # Core model implementation
-│   │   ├── model_brain.py         # Main Brain-Inspired GPT model
-│   │   ├── sparse_layers.py       # 95% sparse layers with CUDA
-│   │   ├── attention_dendritic.py # Dendritic attention mechanism
-│   │   └── multilingual_tokenizer.py # Multilingual tokenizer (KO/EN/Multi)
-│   ├── training/             # Training scripts
-│   │   ├── train_simple.py        # Quick training for demos
-│   │   ├── train_korean.py        # Korean language training
-│   │   ├── train_multilingual.py  # Multilingual training with balancing
-│   │   └── train_brain_gpt_3090.py # RTX 3090 optimized
-│   ├── tests/                # Comprehensive tests
-│   └── docs/                 # Additional documentation
-├── data/                     # Datasets
-│   ├── korean_hf/               # Korean datasets (KLUE, KorQuAD)
-│   ├── openwebtext/             # Dataset preparation scripts
-│   │   ├── prepare_simple.py      # Wikipedia datasets
-│   │   ├── prepare_c4.py          # C4 dataset preparation
-│   │   └── prepare_korean_hf_datasets.py # Korean datasets
-│   ├── simple/                  # Wikipedia datasets
-│   ├── c4/                      # Common Crawl cleaned
-│   └── [dataset_name]/          # Other datasets
-├── checkpoints/              # Saved models
-├── quick_prepare_datasets.py # Quick dataset preparation
-├── test_multilingual.py      # Test multilingual capabilities
-├── test_training_quick.py    # Quick training test
-├── DATA_GUIDE.md            # Detailed dataset guide
-├── pyproject.toml           # Project configuration
-└── uv.lock                  # Locked dependencies
-```
-
-## 🧪 Running Tests
-
-```bash
-# Run all tests
-uv run brain_gpt/tests/run_all_tests.py
-
-# Run specific test suite
-uv run brain_gpt/tests/comprehensive_test.py
-
-# Validate model functionality
-uv run validate_brain_gpt.py
-
-# Test multilingual generation
-uv run test_multilingual.py
-```
-
-## 📚 Documentation
-
-- **Main Documentation**: This README contains all essential information
-- **Dataset Guide**: See [DATA_GUIDE.md](DATA_GUIDE.md) for detailed dataset information
-- **Korean Version**: [README_KR.md](README_KR.md) for Korean documentation
-
-## 🌏 Multilingual Support
-
-Brain-Inspired GPT provides comprehensive multilingual capabilities:
-
-### Supported Languages
-- **Primary**: English, Korean
-- **Additional**: German, French, Spanish, Italian (via RedPajama-v2)
-- **Extensible**: Easy to add new languages
-
-### Language Features
-- **Automatic Detection**: Smart language detection in mixed texts
-- **Balanced Training**: Options for equal language representation
-- **Language Markers**: Clear separation between languages during training
-- **Cross-lingual**: Handles code-switching and mixed language inputs
-
-### Dataset Statistics
-- **Korean**: 50M+ tokens from KLUE, KorQuAD, parallel corpora
-- **English**: 15T+ tokens from FineWeb, Wikipedia, RedPajama
-- **Multilingual**: 30T tokens across 5 languages (RedPajama-v2)
-
-## 🏗️ Model Architecture Diagram
+### 🏛️ Architecture
 
 ```mermaid
 graph TB
-    subgraph "Brain-Inspired GPT Architecture"
-        Input[Input Tokens] --> Embed[Token Embedding<br/>+ Positional Encoding]
+    subgraph "CortexGPT Model"
+        Input["📥 Input Layer<br/>• Multilingual Tokenizer<br/>• Korean/English Support<br/>• BPE Encoding"]
         
-        Embed --> CC1[Cortical Columns Layer 1<br/>32 columns × 64 neurons]
+        Transformer["🤖 Transformer Core<br/>• Multi-Head Attention<br/>• Feed Forward Network<br/>• Layer Normalization<br/>• Residual Connections"]
         
-        subgraph "Cortical Column Details"
-            CC1 --> SA1[Sparse Attention<br/>95% Sparsity]
-            SA1 --> DA1[Dendritic Attention<br/>4 dendrites/neuron]
-            DA1 --> LI1[Lateral Inhibition<br/>Column Competition]
-            LI1 --> MLP1[Sparse MLP<br/>2:4 Structured Sparsity]
+        subgraph "Memory System"
+            STM["💭 STM (Short-Term Memory)<br/>• Capacity: 64<br/>• Fast Access<br/>• Recent Interactions"]
+            LTM["🧠 LTM (Long-Term Memory)<br/>• Capacity: 10,000<br/>• Consolidated Knowledge<br/>• Frequent Patterns"]
+            Archive["📚 Archive Memory<br/>• Capacity: 100,000<br/>• Compressed Storage<br/>• Rarely Used Knowledge"]
         end
         
-        MLP1 --> EE1{Early Exit?<br/>Confidence Check}
-        EE1 -->|No| CC2[Cortical Columns Layer 2]
-        EE1 -->|Yes| Output1[Generate Output]
+        Learner["🎓 Real-Time Learner<br/>• Online Learning<br/>• Memory Consolidation<br/>• Self-Evaluation"]
         
-        CC2 --> SA2[Sparse Attention]
-        SA2 --> DA2[Dendritic Attention]
-        DA2 --> LI2[Lateral Inhibition]
-        LI2 --> MLP2[Sparse MLP]
-        
-        MLP2 --> EE2{Early Exit?}
-        EE2 -->|No| CCN[...]
-        EE2 -->|Yes| Output2[Generate Output]
-        
-        CCN --> Final[Final Layer<br/>Cortical Columns]
-        Final --> Output[Output Tokens]
+        Output["📤 Output Layer<br/>• Token Generation<br/>• Confidence Scoring<br/>• Language Detection"]
     end
     
-    subgraph "Developmental Stages"
-        S1[Stage 1: 2 Layers<br/>Basic Patterns]
-        S2[Stage 2: 4 Layers<br/>Simple Language]
-        S3[Stage 3: 8 Layers<br/>Complex Reasoning]
-        S4[Stage 4: 12 Layers<br/>Abstract Thinking]
-        S5[Stage 5: All Layers<br/>Full Capacity]
-        
-        S1 --> S2 --> S3 --> S4 --> S5
-    end
+    Input --> |"Encoded Tokens"| Transformer
+    Transformer --> |"Store Context"| STM
+    STM --> |"Consolidate<br/>(Frequent Use)"| LTM
+    LTM --> |"Archive<br/>(Rare Use)"| Archive
+    STM --> |"Current Context"| Learner
+    LTM --> |"Retrieved Knowledge"| Learner
+    Learner --> |"Updated Weights"| Transformer
+    Transformer --> |"Predictions"| Output
+    Learner -.-> |"Update"| STM
+    Learner -.-> |"Transfer"| LTM
     
-    style Input fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
-    style Output fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
-    style Output1 fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
-    style Output2 fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
-    style SA1 fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
-    style SA2 fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
-    style DA1 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style DA2 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style LI1 fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
-    style LI2 fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
-    style MLP1 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
-    style MLP2 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    style Input fill:#e6f3ff
+    style Transformer fill:#e6f3ff
+    style STM fill:#ffe6e6
+    style LTM fill:#e6ffe6
+    style Archive fill:#e6e6ff
+    style Learner fill:#e6f3ff
+    style Output fill:#e6f3ff
 ```
 
-### Detailed Component Breakdown
+### 🌟 Key Features
 
-```mermaid
-graph LR
-    subgraph "Sparse Attention Mechanism"
-        Q[Query] --> Mask[Magnitude Mask<br/>Top 5%]
-        K[Key] --> Mask
-        V[Value] --> Mask
-        Mask --> Attn[Sparse Attention<br/>Computation]
-        Attn --> Out1[Attention Output]
-    end
-    
-    subgraph "Dendritic Attention Flow"
-        Input2[Neuron Input] --> D1[Dendrite 1]
-        Input2 --> D2[Dendrite 2]
-        Input2 --> D3[Dendrite 3]
-        Input2 --> D4[Dendrite 4]
-        
-        D1 --> Gate1[Gating<br/>Function]
-        D2 --> Gate2[Gating<br/>Function]
-        D3 --> Gate3[Gating<br/>Function]
-        D4 --> Gate4[Gating<br/>Function]
-        
-        Gate1 --> Sum[Weighted<br/>Sum]
-        Gate2 --> Sum
-        Gate3 --> Sum
-        Gate4 --> Sum
-        
-        Sum --> Out2[Dendritic Output]
-    end
-    
-    subgraph "Cortical Column Structure"
-        N1[Neurons<br/>1-16] --> Col1[Column 1]
-        N2[Neurons<br/>17-32] --> Col2[Column 2]
-        N3[Neurons<br/>33-48] --> Col3[Column 3]
-        NN[...] --> ColN[Column 32]
-        
-        Col1 <--> Col2
-        Col2 <--> Col3
-        Col3 <--> ColN
-        
-        Col1 --> Comp[Competition<br/>via Lateral<br/>Inhibition]
-        Col2 --> Comp
-        Col3 --> Comp
-        ColN --> Comp
-    end
-    
-    style Q fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
-    style K fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
-    style V fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
-    style D1 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style D2 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style D3 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style D4 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
-    style Col1 fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
-    style Col2 fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
-    style Col3 fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
-    style ColN fill:#fff9c4,stroke:#f57c00,stroke-width:2px,color:#000
+- **Real-time Learning**: Continuously learns without train/inference distinction
+- **Human-like Memory**: STM (Short-term) → LTM (Long-term) → Archive system
+- **Self-Improvement**: Self-evaluation and improvement mechanisms
+- **Multilingual Support**: Natural processing of Korean and English
+- **Memory Efficiency**: Adaptive batch sizing to prevent OOM
+- **Checkpoint Support**: Resume training after interruptions
+
+### 🚀 Quick Start
+
+#### 1. Installation
+
+```bash
+# Clone repository
+git clone https://github.com/comsa33/cortexgpt.git
+cd cortexgpt
+
+# Install all dependencies
+uv sync
+
+# Or install with optional monitoring tools
+uv sync --extra monitoring
 ```
 
-## 🔬 Key Differences from Standard Transformers
+#### 2. Create Demo Data
 
-### 1. Sparse Activation Pattern
-- **Standard Transformer**: All neurons activate densely (100% activation)
-- **Brain-Inspired GPT**: Only 5% activate per forward pass (95% sparsity)
-- **Implementation**: Magnitude-based pruning with structured sparsity (2:4 pattern for RTX GPUs)
+```bash
+# Create demo training data
+uv run scripts/data/create_demo_data.py
+```
 
-### 2. Cortical Column Architecture
-- **Standard Transformer**: Flat layer structure with uniform processing
-- **Brain-Inspired GPT**: Modular cortical columns (32 columns × 64 neurons)
-- **Features**: Lateral inhibition for inter-column competition, enhanced local processing
+#### 3. Test Basic Functionality
 
-### 3. Dendritic Attention Mechanism
-- **Standard Transformer**: Single attention pathway per head
-- **Brain-Inspired GPT**: Multiple dendrites per neuron (4 dendrites default)
-- **Benefits**: Context-dependent sparse routing, biologically plausible gradient flow
+```bash
+# Test tokenizer
+uv run tests/demo_tokenizer.py
 
-### 4. Developmental Stage Training
-- **Standard Transformer**: Fixed architecture throughout training
-- **Brain-Inspired GPT**: 5-stage progressive growth mimicking human development
-- **Stages**:
-  - Stage 1: Basic pattern recognition (2 layers)
-  - Stage 2: Simple language understanding (4 layers)
-  - Stage 3: Complex reasoning (8 layers)
-  - Stage 4: Abstract thinking (12 layers)
-  - Stage 5: Full capacity (all layers)
+# Test if model can learn (overfitting test)
+uv run tests/test_overfit.py
+```
 
-### 5. Early Exit Mechanism
-- **Standard Transformer**: Must process through all layers
-- **Brain-Inspired GPT**: Confidence-based early exit (average 40% layers used)
-- **Benefits**: Dynamic computation allocation, improved energy efficiency
+#### 4. Training
 
-## 💡 Key Innovations
+```bash
+# Quick demo training (small model, fast)
+uv run cortexgpt/training/train_realtime.py \
+    --dataset demo \
+    --dim 256 \
+    --lr 1e-3 \
+    --epochs 20
 
-### 1. Extreme Sparsity (95%)
-- Only 5% of neurons active at any time
-- Matches biological brain efficiency
-- 20x parameter reduction with minimal performance loss
+# Monitor with wandb
+uv run cortexgpt/training/train_realtime.py \
+    --dataset demo \
+    --dim 512 \
+    --wandb
 
-### 2. Cortical Columns
-- Modular processing units like neocortex
-- 32 columns × 64 neurons typical configuration
-- Lateral inhibition for competition
+# Train with real datasets (after setup)
+uv run scripts/data/setup_datasets.py  # Download & prepare datasets
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --batch-size 4 \
+    --gradient-accumulation 8 \
+    --epochs 50 \
+    --wandb
 
-### 3. Dendritic Attention
-- Multiple dendrites per neuron
-- Sparse, context-dependent routing
-- Biologically-plausible credit assignment
+# Resume interrupted training
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --resume auto
+```
 
-### 4. Developmental Learning
-- 5-stage curriculum from simple to complex
-- Progressive architecture growth
-- Mimics human cognitive development
+#### 5. Run Demos
 
-## 🛠️ Advanced Configuration
+```bash
+# Minimal generation demo
+uv run scripts/demos/minimal_demo.py
 
-### Custom Model Configuration
+# Real-time learning demo
+uv run scripts/demos/learning_effect_demo.py
+
+# Interactive chat demo
+uv run scripts/demos/natural_language_demo.py
+```
+
+### 📖 Detailed Usage Guide
+
+#### Using Pre-trained Models
+
+```bash
+# Load a checkpoint and generate text
+uv run cortexgpt/inference/generate.py \
+    --checkpoint checkpoints/best_model.pt \
+    --prompt "The future of AI is" \
+    --max-length 100
+
+# Interactive chat with a trained model
+uv run cortexgpt/inference/chat.py \
+    --checkpoint checkpoints/best_model.pt \
+    --temperature 0.8
+```
+
+#### Real-time Learning Demo
+
+The real-time learning demo shows how CortexGPT learns from interactions:
+
+```bash
+# Run the learning effect demo
+uv run scripts/demos/learning_effect_demo.py
+```
+
+This demonstrates:
+- Initial response without knowledge
+- Learning from user feedback
+- Improved responses after learning
+- Memory consolidation over time
+
+#### Custom Training
+
+For custom datasets, create a JSONL file with your data:
+
+```json
+{"text": "Your training text here"}
+{"text": "Another training example"}
+```
+
+Then train:
+
+```bash
+# Prepare your custom dataset
+uv run cortexgpt/data/prepare_custom.py \
+    --input your_data.jsonl \
+    --output data/custom
+
+# Train on custom data
+uv run cortexgpt/training/train_realtime.py \
+    --dataset custom \
+    --vocab-size 30000 \
+    --epochs 50
+```
+
+#### Memory System Configuration
+
+Adjust memory system parameters for different use cases:
+
+```bash
+# Small memory for quick experiments
+uv run cortexgpt/training/train_realtime.py \
+    --stm-capacity 32 \
+    --ltm-capacity 1000 \
+    --archive-capacity 10000
+
+# Large memory for production
+uv run cortexgpt/training/train_realtime.py \
+    --stm-capacity 128 \
+    --ltm-capacity 50000 \
+    --archive-capacity 500000
+```
+
+#### API Usage
 
 ```python
-from brain_gpt import BrainGPTConfig
+from cortexgpt import CortexGPT, MultilingualTokenizer
 
-config = BrainGPTConfig()
-config.n_layer = 12
-config.n_head = 16
-config.n_embd = 1024
-config.sparsity_base = 0.95  # 95% sparsity
-config.n_cortical_columns = 32
-config.column_size = 32  # 32 * 32 = 1024
-config.gradient_checkpointing = True  # For memory efficiency
+# Initialize model and tokenizer
+model = CortexGPT.from_pretrained("checkpoints/best_model.pt")
+tokenizer = MultilingualTokenizer.from_pretrained("checkpoints/tokenizer.json")
+
+# Generate text
+prompt = "인공지능의 미래는"
+inputs = tokenizer.encode(prompt)
+outputs = model.generate(inputs, max_length=100)
+response = tokenizer.decode(outputs)
+print(response)
+
+# Real-time learning
+from cortexgpt.learning import RealTimeLearner
+
+learner = RealTimeLearner(model, tokenizer)
+learner.start()  # Start background learning
+
+# Process queries with learning
+response, metadata = learner.process_query(
+    "What is machine learning?",
+    learn=True
+)
+print(f"Response: {response}")
+print(f"Confidence: {metadata['confidence']}")
 ```
 
-### Training with Custom Data
+#### Monitoring Training
+
+Use Weights & Biases for detailed monitoring:
 
 ```bash
-# Quick dataset preparation (recommended for first time)
-uv run prepare_all_datasets.py --datasets korean wikipedia
+# First login to wandb
+wandb login
 
-# Prepare all datasets at once (large download)
-uv run prepare_all_datasets.py --datasets all --max-samples 100000
-
-# Train with specific configuration
-uv run brain_gpt/training/train_multilingual.py \
-  --data-dirs data/simple data/fineweb data/korean_hf \
-  --language-sampling balanced \
-  --batch-size 4 \
-  --learning-rate 3e-4
-
-# Or train with single dataset
-uv run brain_gpt/training/train_brain_gpt_3090.py \
-  --data-dir data/fineweb \
-  --batch-size 4 \
-  --max-steps 10000
+# Train with monitoring
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --wandb \
+    --wandb-project "cortexgpt-experiments" \
+    --wandb-name "run-001"
 ```
 
-## 📚 Available Datasets
+Monitor:
+- Training/validation loss
+- Learning rate schedule
+- Memory system usage
+- Sample generations
+- Performance metrics
 
-Brain-Inspired GPT supports training on various high-quality datasets:
+### 🌍 Training with Real Datasets
 
-### 🌐 Working Datasets
-
-| Dataset | Size | Languages | Status | Description |
-|---------|------|-----------|--------|-------------|
-| **Korean Datasets** | 50M+ tokens | KO | ✅ Working | KLUE, KorQuAD, parallel corpora |
-| **Wikipedia** | ~20B tokens | 300+ languages | ✅ Working | Encyclopedia content |
-| **C4** | ~750GB | EN | ✅ Working | Clean Common Crawl |
-| **Simple Mix** | 100M+ tokens | KO+EN | ✅ Working | Combined Wikipedia datasets |
-
-### 🚧 Datasets Under Development
-
-| Dataset | Size | Languages | Issue |
-|---------|------|-----------|-------|
-| **RedPajama-v2** | 30T tokens | Multi | API changes |
-| **FineWeb** | 15T tokens | EN | Dataset structure changes |
-
-### 🔧 Dataset Features
-
-- **Quality Filtering**: Advanced filtering based on perplexity, educational value, and content quality
-- **Language Detection**: Automatic language detection and proper tokenization
-- **Balanced Sampling**: Option to balance languages during training
-- **Memory Efficient**: Streaming support for large datasets
-- **Easy Integration**: Simple commands to download and prepare any dataset
-
-### 📊 Recommended Configurations
+#### Step 1: Download Datasets
 
 ```bash
-# For balanced multilingual model
-uv run quick_prepare_datasets.py
-uv run brain_gpt/training/train_multilingual.py --language-sampling balanced
-
-# For high-quality English model
-uv run data/openwebtext/prepare_c4.py --max-samples 100000
-uv run brain_gpt/training/train_brain_gpt_3090.py --data-dir data/c4
-
-# For Korean-focused model
-uv run brain_gpt/training/prepare_korean_hf_datasets.py
-uv run brain_gpt/training/train_korean.py
+# Download sample datasets (KLUE, Wikipedia, etc.)
+uv run cortexgpt/data/download_datasets.py
 ```
 
-## 📈 Performance
+This downloads samples from:
+- **KLUE**: Korean Language Understanding dataset
+- **Korean Wikipedia**: Korean encyclopedia articles
+- **English Wikipedia**: English encyclopedia articles
+- **OpenWebText**: Web crawl data (sample)
 
-### Benchmarks (RTX 3090)
+#### Step 2: Prepare Datasets (Optional)
 
-| Metric | Small (60M) | Medium (221M) | Large (495M) |
-|--------|-------------|---------------|--------------|
-| Perplexity | 32.4 | 24.7 | 19.8 |
-| Training Speed | 12K tok/s | 8K tok/s | 4K tok/s |
-| Inference Speed | 120 tok/s | 85 tok/s | 45 tok/s |
-| Memory Usage | 0.5GB | 2.8GB | 6.2GB |
-
-### Efficiency Gains
-- **95% fewer active parameters** than dense models
-- **10-20x faster inference** with sparse kernels
-- **5-10x memory reduction** for edge deployment
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Setup
+The training script automatically handles JSONL files, but you can pre-process for faster loading:
 
 ```bash
-# Clone and setup development environment
-git clone https://github.com/comsa33/brain-inspired-gpt.git
-cd brain-inspired-gpt
-
-# Install all dependencies including dev tools
-uv sync --all-extras
-
-# Run tests before submitting PR
-uv run pytest
-uv run black .
-uv run isort .
+# Prepare all downloaded datasets
+uv run cortexgpt/data/prepare_datasets.py
 ```
 
-## 📄 License
+#### Step 3: Train on Real Data
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+##### Korean Dataset (KLUE)
+```bash
+# Train on KLUE dataset
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --dim 512 \
+    --vocab-size 30000 \
+    --batch-size 8 \
+    --gradient-accumulation 4 \
+    --lr 3e-4 \
+    --epochs 10 \
+    --wandb
+```
 
-## 🙏 Acknowledgments
+##### English Dataset (Wikipedia)
+```bash
+# Train on English Wikipedia
+uv run cortexgpt/training/train_realtime.py \
+    --dataset wikipedia \
+    --dim 512 \
+    --vocab-size 30000 \
+    --batch-size 8 \
+    --gradient-accumulation 4 \
+    --lr 3e-4 \
+    --epochs 10 \
+    --wandb
+```
 
-- Inspired by neuroscience research on cortical columns and sparse coding
-- Built with PyTorch and Triton for efficient sparse operations
-- Korean datasets from KLUE and KorQuAD projects
+##### Mixed Korean-English Training
+```bash
+# Train on combined datasets
+uv run cortexgpt/training/train_realtime.py \
+    --dataset combined \
+    --korean-ratio 0.4 \
+    --dim 768 \
+    --vocab-size 50000 \
+    --batch-size 4 \
+    --gradient-accumulation 8 \
+    --lr 2e-4 \
+    --epochs 20 \
+    --wandb
+```
 
-## 📮 Contact
+#### Step 4: Resume Training
 
-- Issues: [GitHub Issues](https://github.com/comsa33/brain-inspired-gpt/issues)
-- Email: comsa333@gmail.com
+If training is interrupted:
+
+```bash
+# Resume from latest checkpoint
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --resume auto \
+    --wandb
+
+# Resume from specific checkpoint
+uv run cortexgpt/training/train_realtime.py \
+    --dataset klue \
+    --resume checkpoints/realtime/model_best.pt \
+    --wandb
+```
+
+#### Training Tips
+
+1. **Start Small**: Begin with `--dim 256` and `--vocab-size 10000` for testing
+2. **Monitor Memory**: Use `--batch-size 2` and increase `--gradient-accumulation` if OOM
+3. **Learning Rate**: Start with `1e-3` for small models, `3e-4` for larger ones
+4. **Vocabulary Size**: 
+   - Korean only: 20,000-30,000
+   - English only: 30,000-40,000
+   - Mixed: 40,000-50,000
+
+### 📊 Available Datasets
+
+| Dataset | Language | Description |
+|---------|----------|-------------|
+| `demo` | Mixed | Small test dataset (default) |
+| `klue` | Korean | Korean Language Understanding Evaluation |
+| `wikipedia` | English | Wikipedia articles |
+| `korean_wiki` | Korean | Korean Wikipedia |
+| `openwebtext` | English | Web text for GPT-2 training |
+| `combined` | Mixed | Multiple datasets combined |
+
+### 🏗️ Project Structure
+
+```
+my-efficient-gpt/
+├── cortexgpt/              # Main package
+│   ├── models/            # Model architectures
+│   ├── learning/          # Real-time learning system
+│   ├── tokenization/      # Multilingual tokenizer
+│   ├── data/             # Data loading utilities
+│   └── training/         # Training scripts
+├── scripts/
+│   ├── data/             # Data preparation scripts
+│   └── demos/            # Demo applications
+├── tests/                # Test scripts
+├── docs/                 # Documentation
+└── data/                 # Training data
+```
+
+### 💡 How It Works
+
+#### Memory Flow
+```
+New Input → STM (Fast Access)
+     ↓ (Frequently Used)
+    LTM (Consolidated Knowledge)
+     ↓ (Long Unused)
+   Archive (Compressed Storage)
+```
+
+#### Learning Process
+1. **First Query**: "Not learned yet"
+2. **After Learning**: Provides accurate answer
+3. **With Repetition**: Confidence increases (0.6 → 0.9 → 1.0)
+
+### 📈 Training Options
+
+```bash
+# Model Architecture
+--dim               # Hidden dimension (256/512/768, default: 768)
+--vocab-size        # Tokenizer vocabulary size (default: 50000)
+
+# Training Parameters
+--batch-size        # Batch size (default: 8)
+--gradient-accumulation  # Gradient accumulation steps (default: 4)
+--epochs           # Number of epochs (default: 10)
+--lr              # Learning rate (default: 3e-4)
+
+# Memory System
+--stm-capacity     # Short-term memory capacity (default: 64)
+--ltm-capacity     # Long-term memory capacity (default: 10000)
+--archive-capacity # Archive capacity (default: 100000)
+
+# Monitoring & Checkpointing
+--wandb           # Enable Weights & Biases logging
+--wandb-project   # W&B project name
+--checkpoint-dir  # Checkpoint directory
+--resume         # Resume from checkpoint (auto/path)
+```
+
+### 🚀 Recommended Training Configurations
+
+#### Testing & Development
+```bash
+# Small model for quick testing
+--dim 256 --lr 1e-3 --batch-size 4 --epochs 20
+```
+
+#### Demo Training
+```bash
+# Medium model for demos
+--dim 512 --lr 5e-4 --batch-size 8 --gradient-accumulation 4
+```
+
+#### Production Training
+```bash
+# Large model for real training
+--dim 768 --lr 3e-4 --batch-size 4 --gradient-accumulation 8 --wandb
+```
+
+### 🔬 Research & Development
+
+CortexGPT implements several neuroscience-inspired concepts:
+
+- **Hebbian Learning**: "Neurons that fire together, wire together"
+- **Memory Consolidation**: Gradual transfer from STM to LTM
+- **Selective Attention**: Focus on relevant information
+- **Continual Learning**: Learn new tasks without forgetting
+
+### 📝 Citation
+
+```bibtex
+@software{cortexgpt2024,
+  author = {Ruo Lee},
+  title = {CortexGPT: Real-time Learning Language Model},
+  year = {2025},
+  email = {comsa333@gmail.com}
+}
+```
+
+### 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-<div align="center">
 Made with ❤️ by Ruo Lee
-</div>
