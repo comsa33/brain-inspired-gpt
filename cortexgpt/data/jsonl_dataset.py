@@ -50,8 +50,8 @@ class JSONLDataset(Dataset):
         
         print(f"Total tokens: {len(all_tokens)}")
         
-        # Create overlapping sequences
-        stride = block_size // 2
+        # Create non-overlapping sequences to avoid repetitive patterns
+        stride = block_size  # No overlap
         for i in range(0, len(all_tokens) - block_size + 1, stride):
             self.samples.append(all_tokens[i:i + block_size])
         

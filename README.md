@@ -64,6 +64,7 @@ graph TB
 - **Multilingual Support**: Natural processing of Korean and English
 - **Memory Efficiency**: Adaptive batch sizing to prevent OOM
 - **Checkpoint Support**: Resume training after interruptions
+- **BGE-M3 Embeddings**: State-of-the-art multilingual embeddings (100+ languages, enabled by default)
 
 ### 🚀 Quick Start
 
@@ -88,7 +89,14 @@ uv sync --extra monitoring
 uv run scripts/data/create_demo_data.py
 ```
 
-#### 3. Test Basic Functionality
+#### 3. Quick Start (Recommended)
+
+```bash
+# Interactive guide to get started
+uv run scripts/quick_start.py
+```
+
+Or manually:
 
 ```bash
 # Test tokenizer
@@ -101,35 +109,22 @@ uv run tests/test_overfit.py
 #### 4. Training
 
 ```bash
-# Quick demo training (small model, fast)
-uv run cortexgpt/training/train_realtime.py \
-    --dataset demo \
-    --dim 256 \
-    --lr 1e-3 \
-    --epochs 20
+# Quick demo training (BGE-M3 embeddings enabled by default)
+uv run scripts/train_cortexgpt.py --dataset demo --epochs 10
 
-# Monitor with wandb
-uv run cortexgpt/training/train_realtime.py \
-    --dataset demo \
-    --dim 512 \
-    --wandb
-
-# Train with real datasets (after setup)
-uv run scripts/data/setup_datasets.py  # Download & prepare datasets
-uv run cortexgpt/training/train_realtime.py \
-    --dataset klue \
-    --batch-size 4 \
-    --gradient-accumulation 8 \
-    --epochs 50 \
-    --wandb
+# Train with real datasets (after download)
+uv run scripts/train_cortexgpt.py --dataset klue --epochs 20 --wandb
 
 # Resume interrupted training
-uv run cortexgpt/training/train_realtime.py \
-    --dataset klue \
-    --resume auto
+uv run scripts/train_cortexgpt.py --dataset klue --resume checkpoints/model_best.pt
 ```
 
-#### 5. Run Demos
+For advanced options:
+```bash
+uv run scripts/train_cortexgpt.py --help
+```
+
+#### 5. Run Demos and Benchmarks
 
 ```bash
 # Minimal generation demo
@@ -140,6 +135,9 @@ uv run scripts/demos/learning_effect_demo.py
 
 # Interactive chat demo
 uv run scripts/demos/natural_language_demo.py
+
+# Performance benchmark
+uv run scripts/benchmark.py --checkpoint checkpoints/model_best.pt
 ```
 
 ### 📖 Detailed Usage Guide
@@ -147,15 +145,16 @@ uv run scripts/demos/natural_language_demo.py
 #### Using Pre-trained Models
 
 ```bash
-# Load a checkpoint and generate text
-uv run cortexgpt/inference/generate.py \
-    --checkpoint checkpoints/best_model.pt \
+# Generate text with trained model
+uv run scripts/generate.py \
+    --checkpoint checkpoints/model_best.pt \
     --prompt "The future of AI is" \
     --max-length 100
 
-# Interactive chat with a trained model
-uv run cortexgpt/inference/chat.py \
-    --checkpoint checkpoints/best_model.pt \
+# Generate Korean text
+uv run scripts/generate.py \
+    --checkpoint checkpoints/model_best.pt \
+    --prompt "인공지능의 미래는" \
     --temperature 0.8
 ```
 
@@ -275,24 +274,28 @@ Monitor:
 #### Step 1: Download Datasets
 
 ```bash
-# Download sample datasets (KLUE, Wikipedia, etc.)
-uv run cortexgpt/data/download_datasets.py
+# List available datasets
+uv run scripts/download_data.py --list
+
+# Download specific dataset
+uv run scripts/download_data.py --dataset english_large
+uv run scripts/download_data.py --dataset korean_large
+
+# Download all English datasets
+uv run scripts/download_data.py --all --category english
+
+# Download all Korean datasets
+uv run scripts/download_data.py --all --category korean
 ```
 
-This downloads samples from:
-- **KLUE**: Korean Language Understanding dataset
-- **Korean Wikipedia**: Korean encyclopedia articles
-- **English Wikipedia**: English encyclopedia articles
-- **OpenWebText**: Web crawl data (sample)
+Available datasets:
+- **English**: english_small (5K), english_large (50K), wikitext, openwebtext, c4_en
+- **Korean**: korean_small (5K), korean_large (50K), klue
+- **Demo**: demo (1K samples)
 
-#### Step 2: Prepare Datasets (Optional)
+#### Step 2: Start Training
 
-The training script automatically handles JSONL files, but you can pre-process for faster loading:
-
-```bash
-# Prepare all downloaded datasets
-uv run cortexgpt/data/prepare_datasets.py
-```
+The training script automatically handles JSONL files.
 
 #### Step 3: Train on Real Data
 
@@ -310,11 +313,22 @@ uv run cortexgpt/training/train_realtime.py \
     --wandb
 ```
 
-##### English Dataset (Wikipedia)
+##### English Dataset
 ```bash
-# Train on English Wikipedia
+# Train on large English dataset
 uv run cortexgpt/training/train_realtime.py \
-    --dataset wikipedia \
+    --dataset english_large \
+    --dim 512 \
+    --vocab-size 30000 \
+    --batch-size 8 \
+    --gradient-accumulation 4 \
+    --lr 3e-4 \
+    --epochs 10 \
+    --wandb
+
+# Or use Wikitext dataset
+uv run cortexgpt/training/train_realtime.py \
+    --dataset wikitext \
     --dim 512 \
     --vocab-size 30000 \
     --batch-size 8 \
@@ -326,7 +340,11 @@ uv run cortexgpt/training/train_realtime.py \
 
 ##### Mixed Korean-English Training
 ```bash
-# Train on combined datasets
+# First download both datasets
+uv run scripts/download_data.py --dataset english_large
+uv run scripts/download_data.py --dataset korean_large
+
+# Train on combined datasets (combined = klue + english_large)
 uv run cortexgpt/training/train_realtime.py \
     --dataset combined \
     --korean-ratio 0.4 \
@@ -367,16 +385,42 @@ uv run cortexgpt/training/train_realtime.py \
    - English only: 30,000-40,000
    - Mixed: 40,000-50,000
 
+#### ⚡ Fast Data Loading with Async Multiprocessing
+
+CortexGPT now includes async multiprocessing for ultra-fast data loading, solving the issue where training took 20+ minutes to start with large datasets:
+
+```bash
+# Training automatically uses async loading for faster startup
+uv run cortexgpt/training/train_realtime.py \
+    --dataset wikitext \
+    --num-workers 4 \
+    --batch-size 8 \
+    --epochs 10
+
+# Or use the convenience script
+uv run scripts/train_with_async.py --wandb
+```
+
+Features:
+- **Parallel Tokenization**: Multiple workers tokenize data simultaneously
+- **Async Processing**: Main process continues while workers prepare data
+- **Memory Efficient**: Processes data in chunks without loading everything
+- **Fast Startup**: Training begins in seconds instead of minutes
+
 ### 📊 Available Datasets
 
-| Dataset | Language | Description |
-|---------|----------|-------------|
-| `demo` | Mixed | Small test dataset (default) |
-| `klue` | Korean | Korean Language Understanding Evaluation |
-| `wikipedia` | English | Wikipedia articles |
-| `korean_wiki` | Korean | Korean Wikipedia |
-| `openwebtext` | English | Web text for GPT-2 training |
-| `combined` | Mixed | Multiple datasets combined |
+| Dataset | Language | Samples | Description |
+|---------|----------|---------|-------------|
+| `demo` | Mixed | 1K | Quick test dataset |
+| `english_small` | English | 5K | Small English text dataset |
+| `english_large` | English | 50K | Large English text dataset |
+| `korean_small` | Korean | 5K | Small Korean text dataset |
+| `korean_large` | Korean | 50K | Large Korean text dataset |
+| `wikitext` | English | 10K | WikiText-103 dataset |
+| `openwebtext` | English | 10K | OpenWebText dataset |
+| `c4_en` | English | 5K | C4 English dataset |
+| `klue` | Korean | 10K | Korean Language Understanding |
+| `combined` | Mixed | - | Korean+English combined |
 
 ### 🏗️ Project Structure
 
@@ -430,6 +474,9 @@ New Input → STM (Fast Access)
 --ltm-capacity     # Long-term memory capacity (default: 10000)
 --archive-capacity # Archive capacity (default: 100000)
 
+# Embedding Options
+--embedding-stage     # BGE-M3 training stage (1=adapters only, 2=fine-tune all)
+
 # Monitoring & Checkpointing
 --wandb           # Enable Weights & Biases logging
 --wandb-project   # W&B project name
@@ -457,6 +504,33 @@ New Input → STM (Fast Access)
 --dim 768 --lr 3e-4 --batch-size 4 --gradient-accumulation 8 --wandb
 ```
 
+### 🚀 BGE-M3 Hybrid Embeddings (Enabled by Default)
+
+CortexGPT uses state-of-the-art BGE-M3 embeddings by default for superior multilingual understanding:
+
+#### Features
+- **100+ Language Support**: Beyond just Korean and English
+- **8192 Token Context**: Extended context window
+- **Multi-functionality**: Dense, sparse, and multi-vector retrieval
+- **Memory-Aware Integration**: Combines with CortexGPT's memory systems
+
+#### Training with BGE-M3
+
+```bash
+# Stage 1: Train adapters only (BGE frozen)
+uv run scripts/train_cortexgpt.py \
+    --dataset klue \
+    --bge-stage 1 \
+    --epochs 10
+
+# Stage 2: Fine-tune everything (optional)
+uv run scripts/train_cortexgpt.py \
+    --dataset klue \
+    --bge-stage 2 \
+    --epochs 5 \
+    --resume checkpoints/model_best.pt
+```
+
 ### 🔬 Research & Development
 
 CortexGPT implements several neuroscience-inspired concepts:
@@ -469,7 +543,7 @@ CortexGPT implements several neuroscience-inspired concepts:
 ### 📝 Citation
 
 ```bibtex
-@software{cortexgpt2024,
+@software{cortexgpt2025,
   author = {Ruo Lee},
   title = {CortexGPT: Real-time Learning Language Model},
   year = {2025},

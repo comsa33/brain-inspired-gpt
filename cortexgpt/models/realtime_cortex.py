@@ -22,6 +22,7 @@ import time
 from datetime import datetime
 import threading
 import queue
+from .hybrid_embeddings import HybridEmbeddingLayer, EmbeddingAdapterTrainer
 
 
 @dataclass
@@ -378,14 +379,22 @@ class RealTimeCortexGPT(nn.Module):
     Real-time learning CortexGPT with human-like memory dynamics
     """
     
-    def __init__(self, config: AdvancedMemoryConfig, vocab_size: int, dim: int):
+    def __init__(self, config: AdvancedMemoryConfig, vocab_size: int, dim: int, 
+                 use_hybrid_embeddings: bool = True, tokenizer=None):
         super().__init__()
         self.config = config
         self.dim = dim
+        self.tokenizer = tokenizer
         
-        # Embeddings
-        self.token_embedding = nn.Embedding(vocab_size, dim)
-        self.position_embedding = nn.Embedding(5000, dim)
+        # Always use BGE-M3 hybrid embeddings
+        self.embeddings = HybridEmbeddingLayer(
+            vocab_size=vocab_size,
+            dim=dim,
+            use_fp16=True,
+            cache_embeddings=True,
+            special_tokens=tokenizer.special_tokens if tokenizer else None
+        )
+        self.use_hybrid = True
         
         # Advanced memory systems
         self.stm = AdaptiveMemoryBuffer(
@@ -442,9 +451,20 @@ class RealTimeCortexGPT(nn.Module):
         batch_size, seq_len = query.shape
         
         # Get embeddings
-        token_embeds = self.token_embedding(query)
-        pos_embeds = self.position_embedding(torch.arange(seq_len, device=query.device))
-        x = token_embeds + pos_embeds.unsqueeze(0)
+        if self.use_hybrid:
+            # Get memory context for hybrid embeddings
+            memory_context = None
+            if hasattr(self, 'stm') and self.stm.memories:
+                # Use recent STM as context
+                recent_memory = self.stm.memories[-1]['value'] if self.stm.memories else None
+                if recent_memory is not None:
+                    memory_context = recent_memory.mean(dim=0, keepdim=True).expand(batch_size, -1)
+            
+            x = self.embeddings(query, tokenizer=self.tokenizer, memory_context=memory_context)
+        else:
+            token_embeds = self.token_embedding(query)
+            pos_embeds = self.position_embedding(torch.arange(seq_len, device=query.device))
+            x = token_embeds + pos_embeds.unsqueeze(0)
         
         # Process through sparse attention
         attended, attention_weights = self.sparse_attention(x, x, x)
@@ -572,9 +592,8 @@ class RealTimeCortexGPT(nn.Module):
             batch_size, seq_len = input_ids.shape
             
             # Embeddings
-            token_embeds = self.token_embedding(input_ids)
-            pos_embeds = self.position_embedding(torch.arange(seq_len, device=input_ids.device))
-            x = token_embeds + pos_embeds.unsqueeze(0)
+            # Always use hybrid embeddings
+            x = self.embeddings(input_ids, tokenizer=self.tokenizer, memory_context=None)
             
             # Process with attention
             attended, _ = self.sparse_attention(x, x, x)

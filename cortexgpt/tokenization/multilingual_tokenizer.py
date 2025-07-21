@@ -288,12 +288,16 @@ class MultilingualTokenizer:
         for id in ids:
             if id in self.reverse_vocab:
                 token = self.reverse_vocab[id]
-                # Skip special tokens in decoding
-                if token not in self.special_tokens or token in ["<ko_start>", "<ko_end>"]:
-                    if token not in ["<ko_start>", "<ko_end>"]:
-                        tokens.append(token)
+                # Skip all special tokens except for content-relevant ones
+                if token in self.special_tokens:
+                    # Only skip control tokens, not content tokens
+                    if token in ["<pad>", "<unk>", "<eos>", "<bos>", "<mask>", 
+                               "<ko_start>", "<ko_end>", "<en_start>", "<en_end>"]:
+                        continue
+                tokens.append(token)
             else:
-                tokens.append("<unk>")
+                # Skip invalid IDs instead of adding <unk>
+                continue
         
         # Join tokens
         text = "".join(tokens)

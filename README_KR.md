@@ -64,6 +64,7 @@ graph TB
 - **다국어 지원**: 한국어와 영어를 자연스럽게 처리
 - **메모리 효율성**: OOM 방지를 위한 적응형 배치 크기 조정
 - **체크포인트 지원**: 중단 후 훈련 재개 가능
+- **BGE-M3 임베딩**: 최첨단 다국어 임베딩 (100개 이상 언어, 기본 활성화)
 
 ### 🚀 빠른 시작
 
@@ -88,7 +89,14 @@ uv sync --extra monitoring
 uv run scripts/data/create_demo_data.py
 ```
 
-#### 3. 기본 기능 테스트
+#### 3. 빠른 시작 (추천)
+
+```bash
+# 대화형 가이드로 시작
+uv run scripts/quick_start.py
+```
+
+또는 수동으로:
 
 ```bash
 # 토크나이저 테스트
@@ -101,35 +109,22 @@ uv run tests/test_overfit.py
 #### 4. 훈련
 
 ```bash
-# 빠른 데모 훈련 (작은 모델, 빠름)
-uv run cortexgpt/training/train_realtime.py \
-    --dataset demo \
-    --dim 256 \
-    --lr 1e-3 \
-    --epochs 20
+# 빠른 데모 훈련 (BGE-M3 임베딩 기본 사용)
+uv run scripts/train_cortexgpt.py --dataset demo --epochs 10
 
-# wandb로 모니터링
-uv run cortexgpt/training/train_realtime.py \
-    --dataset demo \
-    --dim 512 \
-    --wandb
-
-# 실제 데이터셋으로 훈련 (설정 후)
-uv run scripts/data/setup_datasets.py  # 데이터셋 다운로드 및 준비
-uv run cortexgpt/training/train_realtime.py \
-    --dataset klue \
-    --batch-size 4 \
-    --gradient-accumulation 8 \
-    --epochs 50 \
-    --wandb
+# 실제 데이터셋으로 훈련 (다운로드 후)
+uv run scripts/train_cortexgpt.py --dataset klue --epochs 20 --wandb
 
 # 중단된 훈련 재개
-uv run cortexgpt/training/train_realtime.py \
-    --dataset klue \
-    --resume auto
+uv run scripts/train_cortexgpt.py --dataset klue --resume checkpoints/model_best.pt
 ```
 
-#### 5. 데모 실행
+고급 옵션:
+```bash
+uv run scripts/train_cortexgpt.py --help
+```
+
+#### 5. 데모 실행 및 벤치마크
 
 ```bash
 # 최소 생성 데모
@@ -140,6 +135,9 @@ uv run scripts/demos/learning_effect_demo.py
 
 # 대화형 채팅 데모
 uv run scripts/demos/natural_language_demo.py
+
+# 성능 벤치마크
+uv run scripts/benchmark.py --checkpoint checkpoints/model_best.pt
 ```
 
 ### 📖 상세 사용 가이드
@@ -147,15 +145,16 @@ uv run scripts/demos/natural_language_demo.py
 #### 사전 훈련된 모델 사용하기
 
 ```bash
-# 체크포인트를 로드하고 텍스트 생성
-uv run cortexgpt/inference/generate.py \
-    --checkpoint checkpoints/best_model.pt \
+# 훈련된 모델로 텍스트 생성
+uv run scripts/generate.py \
+    --checkpoint checkpoints/model_best.pt \
     --prompt "인공지능의 미래는" \
     --max-length 100
 
-# 훈련된 모델로 대화형 채팅
-uv run cortexgpt/inference/chat.py \
-    --checkpoint checkpoints/best_model.pt \
+# 영어 텍스트 생성
+uv run scripts/generate.py \
+    --checkpoint checkpoints/model_best.pt \
+    --prompt "The future of AI is" \
     --temperature 0.8
 ```
 
@@ -275,24 +274,28 @@ uv run cortexgpt/training/train_realtime.py \
 #### 1단계: 데이터셋 다운로드
 
 ```bash
-# 샘플 데이터셋 다운로드 (KLUE, 위키피디아 등)
-uv run cortexgpt/data/download_datasets.py
+# 사용 가능한 데이터셋 목록 보기
+uv run scripts/download_data.py --list
+
+# 특정 데이터셋 다운로드
+uv run scripts/download_data.py --dataset english_large
+uv run scripts/download_data.py --dataset korean_large
+
+# 모든 영어 데이터셋 다운로드
+uv run scripts/download_data.py --all --category english
+
+# 모든 한국어 데이터셋 다운로드
+uv run scripts/download_data.py --all --category korean
 ```
 
-다음 데이터셋의 샘플을 다운로드합니다:
-- **KLUE**: 한국어 언어 이해 평가 데이터셋
-- **한국어 위키피디아**: 한국어 백과사전 문서
-- **영어 위키피디아**: 영어 백과사전 문서
-- **OpenWebText**: 웹 크롤링 데이터 (샘플)
+사용 가능한 데이터셋:
+- **영어**: english_small (5K), english_large (50K), wikitext, openwebtext, c4_en
+- **한국어**: korean_small (5K), korean_large (50K), klue
+- **데모**: demo (1K 샘플)
 
-#### 2단계: 데이터셋 준비 (선택사항)
+#### 2단계: 훈련 시작
 
-훈련 스크립트는 JSONL 파일을 자동으로 처리하지만, 더 빠른 로딩을 위해 사전 처리할 수 있습니다:
-
-```bash
-# 다운로드한 모든 데이터셋 준비
-uv run cortexgpt/data/prepare_datasets.py
-```
+훈련 스크립트는 JSONL 파일을 자동으로 처리합니다.
 
 #### 3단계: 실제 데이터로 훈련
 
@@ -310,11 +313,22 @@ uv run cortexgpt/training/train_realtime.py \
     --wandb
 ```
 
-##### 영어 데이터셋 (위키피디아)
+##### 영어 데이터셋
 ```bash
-# 영어 위키피디아로 훈련
+# 대규모 영어 데이터로 훈련
 uv run cortexgpt/training/train_realtime.py \
-    --dataset wikipedia \
+    --dataset english_large \
+    --dim 512 \
+    --vocab-size 30000 \
+    --batch-size 8 \
+    --gradient-accumulation 4 \
+    --lr 3e-4 \
+    --epochs 10 \
+    --wandb
+
+# 또는 Wikitext 데이터셋 사용
+uv run cortexgpt/training/train_realtime.py \
+    --dataset wikitext \
     --dim 512 \
     --vocab-size 30000 \
     --batch-size 8 \
@@ -326,7 +340,11 @@ uv run cortexgpt/training/train_realtime.py \
 
 ##### 한국어-영어 혼합 훈련
 ```bash
-# 결합된 데이터셋으로 훈련
+# 먼저 두 데이터셋 다운로드
+uv run scripts/download_data.py --dataset english_large
+uv run scripts/download_data.py --dataset korean_large
+
+# 결합된 데이터셋으로 훈련 (combined는 klue + english_large 조합)
 uv run cortexgpt/training/train_realtime.py \
     --dataset combined \
     --korean-ratio 0.4 \
@@ -367,16 +385,42 @@ uv run cortexgpt/training/train_realtime.py \
    - 영어만: 30,000-40,000
    - 혼합: 40,000-50,000
 
+#### ⚡ 비동기 멀티프로세싱을 통한 빠른 데이터 로딩
+
+CortexGPT는 이제 비동기 멀티프로세싱을 통해 초고속 데이터 로딩을 지원합니다. 대용량 데이터셋에서 훈련 시작까지 20분 이상 걸리던 문제를 해결했습니다:
+
+```bash
+# 훈련 시 자동으로 비동기 로딩을 사용하여 빠르게 시작
+uv run cortexgpt/training/train_realtime.py \
+    --dataset wikitext \
+    --num-workers 4 \
+    --batch-size 8 \
+    --epochs 10
+
+# 또는 편의 스크립트 사용
+uv run scripts/train_with_async.py --wandb
+```
+
+특징:
+- **병렬 토크나이징**: 여러 워커가 동시에 데이터를 토크나이즈
+- **비동기 처리**: 워커가 데이터를 준비하는 동안 메인 프로세스는 계속 진행
+- **메모리 효율적**: 모든 데이터를 로드하지 않고 청크 단위로 처리
+- **빠른 시작**: 몇 분이 아닌 몇 초 만에 훈련 시작
+
 ### 📊 사용 가능한 데이터셋
 
-| 데이터셋 | 언어 | 설명 |
-|---------|------|------|
-| `demo` | 혼합 | 작은 테스트 데이터셋 (기본값) |
-| `klue` | 한국어 | 한국어 언어 이해 평가 |
-| `wikipedia` | 영어 | 위키피디아 문서 |
-| `korean_wiki` | 한국어 | 한국어 위키피디아 |
-| `openwebtext` | 영어 | GPT-2 훈련용 웹 텍스트 |
-| `combined` | 혼합 | 여러 데이터셋 조합 |
+| 데이터셋 | 언어 | 샘플 수 | 설명 |
+|---------|------|---------|------|
+| `demo` | 혼합 | 1K | 빠른 테스트용 작은 데이터셋 |
+| `english_small` | 영어 | 5K | 소규모 영어 텍스트 |
+| `english_large` | 영어 | 50K | 대규모 영어 텍스트 |
+| `korean_small` | 한국어 | 5K | 소규모 한국어 텍스트 |
+| `korean_large` | 한국어 | 50K | 대규모 한국어 텍스트 |
+| `wikitext` | 영어 | 10K | WikiText-103 데이터셋 |
+| `openwebtext` | 영어 | 10K | OpenWebText 데이터셋 |
+| `c4_en` | 영어 | 5K | C4 영어 데이터셋 |
+| `klue` | 한국어 | 10K | 한국어 언어 이해 평가 |
+| `combined` | 혼합 | - | 한국어+영어 조합 |
 
 ### 🏗️ 프로젝트 구조
 
@@ -430,6 +474,9 @@ my-efficient-gpt/
 --ltm-capacity     # 장기 기억 용량 (기본값: 10000)
 --archive-capacity # 보관 용량 (기본값: 100000)
 
+# 임베딩 옵션
+--embedding-stage     # BGE-M3 훈련 단계 (1=어댑터만, 2=전체 미세조정)
+
 # 모니터링 및 체크포인팅
 --wandb           # Weights & Biases 로깅 활성화
 --wandb-project   # W&B 프로젝트 이름
@@ -457,6 +504,33 @@ my-efficient-gpt/
 --dim 768 --lr 3e-4 --batch-size 4 --gradient-accumulation 8 --wandb
 ```
 
+### 🚀 BGE-M3 하이브리드 임베딩 (기본 활성화)
+
+CortexGPT는 우수한 다국어 이해를 위해 최첨단 BGE-M3 임베딩을 기본으로 사용합니다:
+
+#### 특징
+- **100개 이상 언어 지원**: 한국어와 영어를 넘어서
+- **8192 토큰 컨텍스트**: 확장된 컨텍스트 윈도우
+- **다기능성**: 밀집, 희소, 다중 벡터 검색
+- **메모리 인식 통합**: CortexGPT의 메모리 시스템과 결합
+
+#### BGE-M3로 훈련하기
+
+```bash
+# 1단계: 어댑터만 훈련 (BGE 동결)
+uv run scripts/train_cortexgpt.py \
+    --dataset klue \
+    --bge-stage 1 \
+    --epochs 10
+
+# 2단계: 전체 미세조정 (선택사항)
+uv run scripts/train_cortexgpt.py \
+    --dataset klue \
+    --bge-stage 2 \
+    --epochs 5 \
+    --resume checkpoints/model_best.pt
+```
+
 ### 🔬 연구 및 개발
 
 CortexGPT는 여러 신경과학 개념을 구현합니다:
@@ -469,7 +543,7 @@ CortexGPT는 여러 신경과학 개념을 구현합니다:
 ### 📝 인용
 
 ```bibtex
-@software{cortexgpt2024,
+@software{cortexgpt2025,
   author = {Ruo Lee},
   title = {CortexGPT: Real-time Learning Language Model},
   year = {2025},

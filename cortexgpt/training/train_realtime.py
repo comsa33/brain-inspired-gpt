@@ -38,9 +38,12 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from cortexgpt.models.realtime_cortex import RealTimeCortexGPT, AdvancedMemoryConfig
+from cortexgpt.models.hybrid_embeddings import EmbeddingAdapterTrainer
 from cortexgpt.tokenization.multilingual_tokenizer import MultilingualTokenizer
 from cortexgpt.data.multilingual_data import create_dataloaders, StreamingDataset
 from cortexgpt.data.jsonl_dataset import create_jsonl_dataloaders
+from cortexgpt.data.lazy_jsonl_dataset import LazyJSONLDataset
+from cortexgpt.data.async_jsonl_dataset import AsyncJSONLDataset, create_async_dataloaders
 from cortexgpt.learning.realtime_learner import RealTimeLearner
 
 
@@ -132,39 +135,53 @@ class MemoryEfficientTrainer:
             print("❌ wandb requested but not installed. Continuing without wandb.")
     
     def _create_optimizer(self):
-        """Create memory-efficient optimizer"""
-        # Group parameters by type for different learning rates
-        param_groups = [
-            # Embeddings - lower LR
-            {
-                "params": [p for n, p in self.model.named_parameters() 
-                          if "embedding" in n],
-                "lr": self.args.lr * 0.5,
-                "weight_decay": 0.0
-            },
-            # Memory systems - adaptive LR
-            {
-                "params": [p for n, p in self.model.named_parameters() 
-                          if any(x in n for x in ["stm", "ltm", "archive"])],
-                "lr": self.args.lr * 0.8,
-                "weight_decay": self.args.weight_decay * 0.5
-            },
-            # Core model - standard LR
-            {
-                "params": [p for n, p in self.model.named_parameters() 
-                          if not any(x in n for x in ["embedding", "stm", "ltm", "archive"])],
-                "lr": self.args.lr,
-                "weight_decay": self.args.weight_decay
-            }
-        ]
-        
-        # Use AdamW with memory-efficient settings
-        optimizer = torch.optim.AdamW(
-            param_groups,
-            betas=(0.9, 0.95),  # More aggressive beta2 for stability
-            eps=1e-8,
-            fused=True if torch.cuda.is_available() else False  # Fused optimizer for memory efficiency
-        )
+        """Create memory-efficient optimizer with hybrid embedding support"""
+        # Always use hybrid embeddings
+        if hasattr(self.model, 'use_hybrid') and self.model.use_hybrid:
+            # Use embedding adapter trainer for stage-specific optimization
+            adapter_trainer = EmbeddingAdapterTrainer(self.model, base_lr=self.args.lr)
+            
+            if self.args.embedding_stage == 1:
+                # Stage 1: Train adapters only, freeze BGE
+                print("📚 Embedding Stage 1: Training adapters only (BGE frozen)")
+                optimizer = adapter_trainer.get_stage1_optimizer(self.model)
+            else:
+                # Stage 2: Fine-tune everything
+                print("🔥 Embedding Stage 2: Fine-tuning all parameters")
+                optimizer = adapter_trainer.get_stage2_optimizer(self.model)
+        else:
+            # Standard optimizer for non-hybrid embeddings
+            param_groups = [
+                # Embeddings - lower LR
+                {
+                    "params": [p for n, p in self.model.named_parameters() 
+                              if "embedding" in n],
+                    "lr": self.args.lr * 0.5,
+                    "weight_decay": 0.0
+                },
+                # Memory systems - adaptive LR
+                {
+                    "params": [p for n, p in self.model.named_parameters() 
+                              if any(x in n for x in ["stm", "ltm", "archive"])],
+                    "lr": self.args.lr * 0.8,
+                    "weight_decay": self.args.weight_decay * 0.5
+                },
+                # Core model - standard LR
+                {
+                    "params": [p for n, p in self.model.named_parameters() 
+                              if not any(x in n for x in ["embedding", "stm", "ltm", "archive"])],
+                    "lr": self.args.lr,
+                    "weight_decay": self.args.weight_decay
+                }
+            ]
+            
+            # Use AdamW with memory-efficient settings
+            optimizer = torch.optim.AdamW(
+                param_groups,
+                betas=(0.9, 0.95),  # More aggressive beta2 for stability
+                eps=1e-8,
+                fused=True if torch.cuda.is_available() else False  # Fused optimizer for memory efficiency
+            )
         
         return optimizer
     
@@ -254,7 +271,9 @@ class MemoryEfficientTrainer:
                 input_ids, target_ids = batch
                 input_ids = input_ids.to(self.device)
                 target_ids = target_ids.to(self.device)
-                attention_mask = torch.ones_like(input_ids)
+                # Create proper attention mask (0 for padding, 1 for real tokens)
+                pad_token_id = self.tokenizer.special_tokens.get('<pad>', 0)
+                attention_mask = (input_ids != pad_token_id).float()
             
             # Truncate batch if needed
             if input_ids.size(0) > self.current_batch_size:
@@ -404,7 +423,9 @@ class MemoryEfficientTrainer:
                 input_ids, target_ids = batch
                 input_ids = input_ids.to(self.device)
                 target_ids = target_ids.to(self.device)
-                attention_mask = torch.ones_like(input_ids)
+                # Create proper attention mask (0 for padding, 1 for real tokens)
+                pad_token_id = self.tokenizer.special_tokens.get('<pad>', 0)
+                attention_mask = (input_ids != pad_token_id).float()
             
             # Forward pass
             with autocast('cuda' if torch.cuda.is_available() else 'cpu'):
@@ -432,7 +453,7 @@ class MemoryEfficientTrainer:
                     lang_losses[lang].append(loss.item())
         
         # Calculate metrics
-        avg_loss = total_loss / len(self.val_loader.dataset)
+        avg_loss = total_loss / max(total_tokens, 1)  # Avoid division by zero
         perplexity = math.exp(min(avg_loss, 10))
         
         metrics = {
@@ -503,6 +524,12 @@ class MemoryEfficientTrainer:
         # Final cleanup
         if self.args.realtime_learning:
             self.realtime_learner.save_state(f"{self.args.checkpoint_dir}/realtime_final")
+        
+        # Clean up async dataset workers if using AsyncJSONLDataset
+        if hasattr(self.train_loader.dataset, 'cleanup'):
+            self.train_loader.dataset.cleanup()
+        if self.val_loader and hasattr(self.val_loader.dataset, 'cleanup'):
+            self.val_loader.dataset.cleanup()
     
     def save_checkpoint(self, epoch: int, metrics: Dict[str, float], is_best: bool = True):
         """Save model checkpoint"""
@@ -633,6 +660,13 @@ def main():
     parser.add_argument("--ltm-capacity", type=int, default=10000)
     parser.add_argument("--archive-capacity", type=int, default=100000)
     
+    # Embedding arguments
+    parser.add_argument("--use-bge-embeddings", action="store_true",
+                       help="Use BGE-M3 hybrid embeddings instead of basic embeddings")
+    parser.add_argument("--embedding-stage", type=int, default=1,
+                       choices=[1, 2],
+                       help="Training stage for embeddings: 1=freeze BGE, 2=fine-tune all")
+    
     # Training arguments
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--gradient-accumulation", type=int, default=4)
@@ -651,7 +685,9 @@ def main():
     parser.add_argument("--data-dir", type=str, default="data", 
                        help="Base directory for datasets")
     parser.add_argument("--dataset", type=str, default="demo",
-                       choices=["demo", "combined", "wikipedia", "klue", "openwebtext"],
+                       choices=["demo", "english_small", "english_large", "korean_small", 
+                               "korean_large", "wikitext", "openwebtext", "c4_en", 
+                               "klue", "combined"],
                        help="Dataset to use for training")
     parser.add_argument("--korean-ratio", type=float, default=0.3)
     parser.add_argument("--num-workers", type=int, default=4)
@@ -721,15 +757,27 @@ def main():
                                 continue
         else:
             # For other datasets, load from the raw data
+            # Updated dataset paths for new unified system
             dataset_paths = {
-                "klue": f"{args.data_dir}/datasets/klue/data.jsonl",
-                "korean_wiki": f"{args.data_dir}/datasets/korean_wiki/data.jsonl",
-                "wikipedia": f"{args.data_dir}/datasets/wikipedia_en/data.jsonl",
+                # Demo datasets
+                "demo": f"{args.data_dir}/datasets/demo/data.jsonl",
+                
+                # English datasets
+                "english_small": f"{args.data_dir}/datasets/english_small/data.jsonl",
+                "english_large": f"{args.data_dir}/datasets/english_large/data.jsonl",
+                "wikitext": f"{args.data_dir}/datasets/wikitext/data.jsonl",
                 "openwebtext": f"{args.data_dir}/datasets/openwebtext/data.jsonl",
+                "c4_en": f"{args.data_dir}/datasets/c4_en/data.jsonl",
+                
+                # Korean datasets
+                "korean_small": f"{args.data_dir}/datasets/korean_small/data.jsonl",
+                "korean_large": f"{args.data_dir}/datasets/korean_large/data.jsonl",
+                "klue": f"{args.data_dir}/datasets/klue/data.jsonl",
+                
+                # Combined datasets
                 "combined": [
                     f"{args.data_dir}/datasets/klue/data.jsonl",
-                    f"{args.data_dir}/datasets/korean_wiki/data.jsonl",
-                    f"{args.data_dir}/datasets/wikipedia_en/data.jsonl"
+                    f"{args.data_dir}/datasets/english_large/data.jsonl"
                 ]
             }
             
@@ -742,7 +790,7 @@ def main():
                     if Path(path).exists():
                         with open(path, 'r', encoding='utf-8') as f:
                             for i, line in enumerate(f):
-                                if i >= 2000:  # Sample more lines for better vocabulary
+                                if i >= 2000:  # Keep original limit
                                     break
                                 try:
                                     data = json.loads(line)
@@ -777,6 +825,7 @@ def main():
             ] * 50  # Repeat to get more samples
         
         print(f"Training tokenizer on {len(training_texts)} text samples...")
+        print("(This may take a moment for large datasets...)")
         tokenizer.learn_bpe(training_texts, verbose=True)
         
         # Save the tokenizer immediately after training
@@ -791,8 +840,16 @@ def main():
     if actual_vocab_size < 1000:
         print(f"⚠️  Warning: Vocabulary size is very small ({actual_vocab_size}). Consider using more training data for tokenizer.")
     
-    model = RealTimeCortexGPT(config, actual_vocab_size, args.dim)
+    # Create model (always with BGE-M3 hybrid embeddings)
+    model = RealTimeCortexGPT(
+        config, 
+        actual_vocab_size, 
+        args.dim,
+        use_hybrid_embeddings=True,  # Always use BGE-M3
+        tokenizer=tokenizer
+    )
     print(f"Created model with vocab size: {actual_vocab_size}")
+    print("✅ Using BGE-M3 hybrid embeddings (always enabled)")
     
     # Create dataloaders
     print("Creating dataloaders...")
@@ -835,31 +892,17 @@ def main():
         
         if Path(dataset_path).exists():
             print(f"Using JSONL data for {args.dataset} dataset...")
-            # Split data for training/validation
-            from cortexgpt.data.jsonl_dataset import JSONLDataset
             
-            # Create train/val split
-            full_dataset = JSONLDataset(dataset_path, tokenizer, block_size=args.block_size)
-            train_size = int(0.95 * len(full_dataset))
-            val_size = len(full_dataset) - train_size
-            
-            train_dataset, val_dataset = torch.utils.data.random_split(
-                full_dataset, [train_size, val_size]
-            )
-            
-            train_loader = torch.utils.data.DataLoader(
-                train_dataset,
+            # Use async multiprocessing for ultra-fast loading
+            print("🚀 Using async multiprocessing for fast data loading...")
+            train_loader, val_loader = create_async_dataloaders(
+                train_path=dataset_path,
+                val_path=dataset_path,  # Use same data for validation
+                tokenizer=tokenizer,
+                block_size=args.block_size,
                 batch_size=args.batch_size,
-                shuffle=True,
-                num_workers=0
+                num_workers=args.num_workers if args.num_workers > 0 else None
             )
-            
-            val_loader = torch.utils.data.DataLoader(
-                val_dataset,
-                batch_size=args.batch_size,
-                shuffle=False,
-                num_workers=0
-            ) if val_size > 0 else None
         else:
             # Try prepared .bin files as fallback
             train_dir = f"{args.data_dir}/datasets/{args.dataset}/prepared"
