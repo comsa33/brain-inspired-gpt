@@ -26,6 +26,9 @@ CortexGPT는 인간의 뇌 학습 메커니즘을 모방한 혁신적인 언어 
 - **경험 기반 자기 개선 메커니즘** - 상호작용을 통해 성능 향상
 - **네이티브 다국어 지원** - BGE-M3 임베딩으로 100개 이상 언어 지원
 - **초고속 데이터 로딩** - 비동기 멀티프로세싱으로 즉시 훈련 시작
+- **향상된 안정성** - 온도 제어 메모리 게이팅 (Phase 1)
+- **뇌과학 기반 기능** - 항상성 가소성 및 수면-각성 주기 포함 (Phase 2)
+- **35배 성능 향상** - GPU 가속 메모리 및 고급 인지 기능 (Phase 3)
 
 ### 🏛️ 아키텍처
 
@@ -77,6 +80,28 @@ graph TB
 - **체크포인트 지원**: 중단 후 훈련 재개 가능
 - **BGE-M3 임베딩**: 최첨단 다국어 임베딩 (100개 이상 언어, 기본 활성화)
 
+#### 🆕 최신 개선사항 (v2.0)
+
+**Phase 1 - 훈련 안정성**:
+- 온도 제어 메모리 게이팅으로 승자독식 현상 방지
+- 메모리 검색에서 그래디언트 중단으로 피드백 루프 제거
+- 손실 급증 감지 및 자동 복구
+- Gumbel-Softmax를 사용한 부드러운 희소성으로 매끄러운 그래디언트
+
+**Phase 2 - neuroscience 기반 기능**:
+- 안정적인 뉴런 발화율을 위한 항상성 가소성
+- 수면-각성 통합 주기 (각성/NREM/REM 단계)
+- 보완 학습 시스템 (빠른 해마 vs 느린 신피질)
+- BCM 학습 규칙을 사용한 메타가소성
+
+**Phase 3 - 성능 최적화**:
+- FAISS를 사용한 GPU 가속 메모리 (35배 속도 향상: 3019.4 토큰/초)
+- 스레드 풀을 사용한 비동기 메모리 작업
+- 경험 시퀀스를 위한 에피소드 메모리
+- 작업별 게이트가 있는 작업 메모리
+- 계층적 메모리 압축
+- 고급 인지 기능 (유추, 인과 추론, 개념 학습)
+
 ### 🚀 빠른 시작
 
 #### 1. 설치
@@ -117,17 +142,61 @@ uv run tests/demo_tokenizer.py
 uv run tests/test_overfit.py
 ```
 
-#### 4. 훈련
+#### 4. 훈련 (v2.0 업데이트)
 
+##### 준비된 바이너리 데이터 사용 (권장)
 ```bash
-# 빠른 데모 훈련 (BGE-M3 임베딩 기본 사용)
-uv run scripts/train_cortexgpt.py --dataset demo --epochs 10
+# 기본 샘플 데이터로 빠른 데모 훈련
+uv run scripts/train_cortexgpt.py --epochs 10 --batch-size 8
 
-# 실제 데이터셋으로 훈련 (다운로드 후)
-uv run scripts/train_cortexgpt.py --dataset klue --epochs 20 --wandb
+# 특정 데이터 파일 지정
+uv run scripts/train_cortexgpt.py \
+    --train-data data/sample_train.bin \
+    --val-data data/sample_val.bin \
+    --epochs 10
+
+# 최소 모드 (모든 고급 기능 비활성화)
+uv run scripts/train_cortexgpt.py --minimal --epochs 5 --batch-size 16
+
+# KLUE 한국어 데이터셋으로 훈련
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/klue/prepared/train.bin \
+    --val-data data/datasets/klue/prepared/val.bin \
+    --epochs 20 --wandb
+
+# 고급 뇌과학 기능 (높은 메모리 사용 - RTX 3090은 아래 참조)
+uv run scripts/train_cortexgpt.py \
+    --enable-homeostasis \
+    --enable-sleep-wake \
+    --consolidation-cycle 1000 \
+    --epochs 20
+
+# GPU 가속 성능 모드
+uv run scripts/train_cortexgpt.py \
+    --use-gpu-memory \
+    --async-memory \
+    --enable-episodic \
+    --enable-working \
+    --epochs 20
 
 # 중단된 훈련 재개
-uv run scripts/train_cortexgpt.py --dataset klue --resume checkpoints/model_best.pt
+uv run scripts/train_cortexgpt.py \
+    --resume checkpoints/cortex_unified/cortex_gpt_best.pt
+```
+
+##### JSONL에서 데이터 준비
+```bash
+# JSONL을 바이너리 형식으로 변환
+uv run cortexgpt/data/prepare_data.py \
+    --input-file data/train.jsonl \
+    --output-file data/custom_train.bin \
+    --tokenizer gpt2
+
+# 준비된 데이터로 훈련
+uv run scripts/train_cortexgpt.py \
+    --train-data data/custom_train.bin \
+    --val-data data/custom_val.bin \
+    --epochs 10
 ```
 
 고급 옵션:
@@ -156,17 +225,23 @@ uv run scripts/benchmark.py --checkpoint checkpoints/model_best.pt
 #### 사전 훈련된 모델 사용하기
 
 ```bash
-# 훈련된 모델로 텍스트 생성
+# 통합 모델로 텍스트 생성
 uv run scripts/generate.py \
-    --checkpoint checkpoints/model_best.pt \
+    --checkpoint checkpoints/cortex_unified/cortex_gpt_best.pt \
     --prompt "인공지능의 미래는" \
     --max-length 100
 
 # 영어 텍스트 생성
 uv run scripts/generate.py \
-    --checkpoint checkpoints/model_best.pt \
+    --checkpoint checkpoints/cortex_unified/cortex_gpt_best.pt \
     --prompt "The future of AI is" \
     --temperature 0.8
+
+# 기존 체크포인트 사용 (호환 가능)
+uv run scripts/generate.py \
+    --checkpoint checkpoints/model_best.pt \
+    --prompt "안녕하세요" \
+    --temperature 0.7
 ```
 
 #### 실시간 학습 데모
@@ -202,9 +277,10 @@ uv run cortexgpt/data/prepare_custom.py \
     --output data/custom
 
 # 커스텀 데이터로 훈련
-uv run cortexgpt/training/train_realtime.py \
-    --dataset custom \
-    --vocab-size 30000 \
+uv run scripts/train_cortexgpt.py \
+    --train-data data/custom/train.bin \
+    --val-data data/custom/val.bin \
+    --vocab-size 50257 \
     --epochs 50
 ```
 
@@ -214,47 +290,50 @@ uv run cortexgpt/training/train_realtime.py \
 
 ```bash
 # 빠른 실험을 위한 작은 메모리
-uv run cortexgpt/training/train_realtime.py \
+uv run scripts/train_cortexgpt.py \
     --stm-capacity 32 \
-    --ltm-capacity 1000 \
-    --archive-capacity 10000
+    --ltm-dim 128 \
+    --episodic-capacity 1000 \
+    --batch-size 8 --epochs 10
 
 # 프로덕션을 위한 큰 메모리
-uv run cortexgpt/training/train_realtime.py \
-    --stm-capacity 128 \
-    --ltm-capacity 50000 \
-    --archive-capacity 500000
+uv run scripts/train_cortexgpt.py \
+    --stm-capacity 256 \
+    --ltm-dim 512 \
+    --episodic-capacity 50000 \
+    --working-memory-slots 16 \
+    --batch-size 4 --epochs 20
 ```
 
 #### API 사용법
 
 ```python
-from cortexgpt import CortexGPT, MultilingualTokenizer
+import torch
+from cortexgpt.models.cortex_gpt import CortexGPT, UnifiedCortexConfig
+from cortexgpt.tokenization import MultilingualTokenizer
 
-# 모델과 토크나이저 초기화
-model = CortexGPT.from_pretrained("checkpoints/best_model.pt")
-tokenizer = MultilingualTokenizer.from_pretrained("checkpoints/tokenizer.json")
+# 통합 모델 초기화
+config = UnifiedCortexConfig()
+model = CortexGPT(config, vocab_size=50257, dim=768)
+
+# 체크포인트 로드
+checkpoint = torch.load("checkpoints/cortex_unified/cortex_gpt_best.pt")
+model.load_state_dict(checkpoint['model_state_dict'])
+
+# 토크나이저 초기화
+tokenizer = MultilingualTokenizer(vocab_size=50257)
 
 # 텍스트 생성
 prompt = "기계 학습이란"
-inputs = tokenizer.encode(prompt)
-outputs = model.generate(inputs, max_length=100)
-response = tokenizer.decode(outputs)
+input_ids = tokenizer.encode(prompt)
+output = model.generate(input_ids, max_length=100)
+response = tokenizer.decode(output)
 print(response)
 
-# 실시간 학습
-from cortexgpt.learning import RealTimeLearner
-
-learner = RealTimeLearner(model, tokenizer)
-learner.start()  # 백그라운드 학습 시작
-
-# 학습과 함께 쿼리 처리
-response, metadata = learner.process_query(
-    "기계 학습이란 무엇인가요?",
-    learn=True
-)
-print(f"응답: {response}")
-print(f"신뢰도: {metadata['confidence']}")
+# 모델 통계 확인
+stats = model.get_stats()
+print(f"메모리 사용률: {stats['stm_usage']:.2%}")
+print(f"활성 컬럼: {stats['active_columns']}")
 ```
 
 #### 훈련 모니터링
@@ -266,11 +345,12 @@ Weights & Biases를 사용하여 상세한 모니터링:
 wandb login
 
 # 모니터링과 함께 훈련
-uv run cortexgpt/training/train_realtime.py \
-    --dataset klue \
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/klue/prepared/train.bin \
+    --val-data data/datasets/klue/prepared/val.bin \
     --wandb \
-    --wandb-project "cortexgpt-experiments" \
-    --wandb-name "run-001"
+    --wandb-project "cortex-gpt-unified" \
+    --wandb-entity "your-entity"
 ```
 
 모니터링 항목:
@@ -304,19 +384,19 @@ uv run scripts/download_data.py --all --category korean
 - **한국어**: korean_small (5K), korean_large (50K), klue
 - **데모**: demo (1K 샘플)
 
-#### 2단계: 훈련 시작
+#### 2단계: 데이터 준비
 
-훈련 스크립트는 JSONL 파일을 자동으로 처리합니다.
+훈련 스크립트는 바이너리(.bin) 파일을 기대합니다. JSONL 파일이 있다면 먼저 변환해야 합니다.
 
 #### 3단계: 실제 데이터로 훈련
 
 ##### 한국어 데이터셋 (KLUE)
 ```bash
-# KLUE 데이터셋으로 훈련
-uv run cortexgpt/training/train_realtime.py \
-    --dataset klue \
+# KLUE 데이터셋으로 훈련 (통합 트레이너 사용)
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/klue/prepared/train.bin \
+    --val-data data/datasets/klue/prepared/val.bin \
     --dim 512 \
-    --vocab-size 30000 \
     --batch-size 8 \
     --gradient-accumulation 4 \
     --lr 3e-4 \
@@ -326,22 +406,16 @@ uv run cortexgpt/training/train_realtime.py \
 
 ##### 영어 데이터셋
 ```bash
-# 대규모 영어 데이터로 훈련
-uv run cortexgpt/training/train_realtime.py \
-    --dataset english_large \
-    --dim 512 \
-    --vocab-size 30000 \
-    --batch-size 8 \
-    --gradient-accumulation 4 \
-    --lr 3e-4 \
-    --epochs 10 \
-    --wandb
+# 먼저 데이터 준비
+uv run cortexgpt/data/prepare_data.py \
+    --input-file data/datasets/english_large/data.jsonl \
+    --output-file data/datasets/english_large/prepared/train.bin
 
-# 또는 Wikitext 데이터셋 사용
-uv run cortexgpt/training/train_realtime.py \
-    --dataset wikitext \
+# 대규모 영어 데이터로 훈련
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/english_large/prepared/train.bin \
+    --val-data data/datasets/english_large/prepared/val.bin \
     --dim 512 \
-    --vocab-size 30000 \
     --batch-size 8 \
     --gradient-accumulation 4 \
     --lr 3e-4 \
@@ -355,12 +429,19 @@ uv run cortexgpt/training/train_realtime.py \
 uv run scripts/download_data.py --dataset english_large
 uv run scripts/download_data.py --dataset korean_large
 
-# 결합된 데이터셋으로 훈련 (combined는 klue + english_large 조합)
-uv run cortexgpt/training/train_realtime.py \
-    --dataset combined \
-    --korean-ratio 0.4 \
+# 먼저 결합된 데이터셋 준비
+uv run cortexgpt/data/prepare_multilingual.py \
+    --korean-data data/datasets/klue/data.jsonl \
+    --english-data data/datasets/english_large/data.jsonl \
+    --output-dir data/datasets/combined/prepared \
+    --korean-ratio 0.4
+
+# 결합된 데이터셋으로 훈련
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/combined/prepared/train.bin \
+    --val-data data/datasets/combined/prepared/val.bin \
     --dim 768 \
-    --vocab-size 50000 \
+    --vocab-size 50257 \
     --batch-size 4 \
     --gradient-accumulation 8 \
     --lr 2e-4 \
@@ -373,17 +454,19 @@ uv run cortexgpt/training/train_realtime.py \
 훈련이 중단된 경우:
 
 ```bash
-# 최신 체크포인트에서 재개
-uv run cortexgpt/training/train_realtime.py \
-    --dataset klue \
-    --resume auto \
+# 특정 체크포인트에서 재개
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/klue/prepared/train.bin \
+    --val-data data/datasets/klue/prepared/val.bin \
+    --resume checkpoints/cortex_unified/cortex_gpt_best.pt \
     --wandb
 
-# 특정 체크포인트에서 재개
-uv run cortexgpt/training/train_realtime.py \
-    --dataset klue \
-    --resume checkpoints/realtime/model_best.pt \
-    --wandb
+# 동일한 설정으로 재개
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/klue/prepared/train.bin \
+    --val-data data/datasets/klue/prepared/val.bin \
+    --resume checkpoints/cortex_unified/cortex_gpt_epoch_10.pt \
+    --epochs 20  # 10 에포크 추가 훈련
 ```
 
 #### 훈련 팁
@@ -402,14 +485,12 @@ CortexGPT는 이제 비동기 멀티프로세싱을 통해 초고속 데이터 �
 
 ```bash
 # 훈련 시 자동으로 비동기 로딩을 사용하여 빠르게 시작
-uv run cortexgpt/training/train_realtime.py \
-    --dataset wikitext \
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/wikitext/prepared/train.bin \
+    --val-data data/datasets/wikitext/prepared/val.bin \
     --num-workers 4 \
     --batch-size 8 \
     --epochs 10
-
-# 또는 편의 스크립트 사용
-uv run scripts/train_with_async.py --wandb
 ```
 
 특징:
@@ -417,6 +498,100 @@ uv run scripts/train_with_async.py --wandb
 - **비동기 처리**: 워커가 데이터를 준비하는 동안 메인 프로세스는 계속 진행
 - **메모리 효율적**: 모든 데이터를 로드하지 않고 청크 단위로 처리
 - **빠른 시작**: 몇 분이 아닌 몇 초 만에 훈련 시작
+
+### 🎯 v2.0의 중요한 변경사항
+
+#### 데이터 형식
+- **바이너리 형식 필요**: 통합 트레이너는 JSONL이 아닌 `.bin` 파일을 기대합니다
+- **데이터 준비**: JSONL을 바이너리 형식으로 변환하려면 `prepare_data.py` 사용
+- **직접 경로 지정**: `--dataset` 대신 `--train-data`와 `--val-data` 사용
+
+#### 체크포인트 위치
+- **새 위치**: `checkpoints/` 대신 `checkpoints/cortex_unified/`
+- **명명 규칙**: `cortex_gpt_best.pt`, `cortex_gpt_epoch_N.pt`
+- **하위 호환성**: 기존 체크포인트도 로드 가능
+
+#### 기본 동작
+- **모든 Phase 활성화**: Phase 1-3 기능이 기본적으로 활성화됨
+- **GPU 메모리**: 사용 가능한 경우 자동으로 GPU 가속 사용
+- **최소 모드**: 모든 고급 기능을 비활성화하려면 `--minimal` 사용
+
+#### 🚀 신규: 소비자 GPU 지원
+이제 소비자 GPU에 최적화된 구성을 제공합니다:
+
+```bash
+# GPU 자동 감지 및 최적 설정 사용
+uv run scripts/train_cortexgpt_consumer_gpu.py --auto-detect
+
+# 또는 가이드 설정을 위한 빠른 시작 사용
+uv run scripts/quick_start_unified.py
+```
+
+**지원되는 GPU 프로필:**
+- **RTX 3090** (24GB): 배치 크기 4, dim 512, 그래디언트 누적 4, Phase 1 활성화
+- **RTX 3080** (10GB): 배치 크기 2, dim 384, 그래디언트 누적 8, 최소 모드
+- **RTX 3070** (8GB): 배치 크기 1, dim 256, 그래디언트 누적 16, 최소 모드
+- **GTX 1660** (6GB): 배치 크기 1, dim 256, 그래디언트 누적 16, 최소 모드만
+
+**메모리 최적화 기능:**
+- 더 큰 효과적인 배치 크기를 위한 그래디언트 누적
+- 혼합 정밀도 훈련 (FP16)
+- 그래디언트 체크포인팅
+- 옵티마이저 상태 오프로딩 (선택사항)
+
+#### 🧠 Consumer GPU에서 Neuroscience 기능 사용하기
+
+뇌과학 기능(Phase 2)은 상당한 메모리를 필요로 합니다. RTX 3090에서 사용하는 방법:
+
+**전용 뇌과학 훈련 스크립트:**
+```bash
+# RTX 3090에 최적화된 선택적 기능 활성화
+uv run scripts/train_neuroscience_3090.py --epochs 20
+
+# 항상성 가소성만 활성화 (최소 메모리)
+uv run scripts/train_neuroscience_3090.py --homeostasis-only --epochs 20
+
+# 수면-각성 주기만 활성화
+uv run scripts/train_neuroscience_3090.py --sleep-wake-only --epochs 20
+```
+
+**뇌과학 기능 수동 설정:**
+```bash
+# 최소 neuroscience - 항상성만 (12-15GB 메모리)
+uv run scripts/train_cortexgpt.py \
+    --batch-size 8 \
+    --gradient-accumulation 2 \
+    --dim 512 \
+    --stm-capacity 64 \
+    --cortical-columns 8 \
+    --enable-homeostasis \
+    --minimal \
+    --epochs 20
+
+# 중간 neuroscience - 항상성 + 수면-각성 (15-18GB 메모리)
+uv run scripts/train_cortexgpt.py \
+    --batch-size 6 \
+    --gradient-accumulation 3 \
+    --dim 512 \
+    --enable-homeostasis \
+    --enable-sleep-wake \
+    --consolidation-cycle 1000 \
+    --minimal \
+    --epochs 20
+```
+
+**기능별 메모리 사용량:**
+- 기본 모델 (최소): ~8-10GB
+- + 항상성: +3-4GB
+- + 수면-각성 주기: +3-4GB
+- + 보완 학습: +2-3GB
+- + Phase 3 (에피소딕/작업 메모리): +5-8GB
+
+**⚠️ 중요 사항:**
+- 모든 기능이 활성화된 기본 구성은 >20GB 메모리 사용
+- RTX 3090의 경우 위의 뇌과학 스크립트나 수동 구성 사용
+- `watch -n 1 nvidia-smi`로 GPU 메모리 모니터링
+- OOM 발생 시 기능을 하나씩 비활성화
 
 ### 📊 사용 가능한 데이터셋
 
@@ -437,18 +612,18 @@ uv run scripts/train_with_async.py --wandb
 
 ```
 my-efficient-gpt/
-├── cortexgpt/              # 메인 패키지
-│   ├── models/            # 모델 아키텍처
-│   ├── learning/          # 실시간 학습 시스템
-│   ├── tokenization/      # 다국어 토크나이저
-│   ├── data/             # 데이터 로딩 유틸리티
-│   └── training/         # 훈련 스크립트
+├── cortexgpt/              # Main package
+│   ├── models/            # Model architectures
+│   ├── learning/          # Real-time learning system
+│   ├── tokenization/      # Multilingual tokenizer
+│   ├── data/             # Data loading utilities
+│   └── training/         # Training scripts
 ├── scripts/
-│   ├── data/             # 데이터 준비 스크립트
-│   └── demos/            # 데모 애플리케이션
-├── tests/                # 테스트 스크립트
-├── docs/                 # 문서
-└── data/                 # 훈련 데이터
+│   ├── data/             # Data preparation scripts
+│   └── demos/            # Demo applications
+├── tests/                # Test scripts
+├── docs/                 # Documentation
+└── data/                 # Training data
 ```
 
 ### 💡 작동 원리
@@ -472,47 +647,110 @@ my-efficient-gpt/
 ```bash
 # 모델 아키텍처
 --dim               # 히든 차원 (256/512/768, 기본값: 768)
---vocab-size        # 토크나이저 어휘 크기 (기본값: 50000)
+--vocab-size        # 토크나이저 어휘 크기 (기본값: 50257)
+--cortical-columns  # 피질 컬럼 수 (기본값: 16)
+--sparsity-ratio   # 컬럼의 희소성 비율 (기본값: 0.05)
 
 # 훈련 파라미터
---batch-size        # 배치 크기 (기본값: 8)
+--batch-size        # 배치 크기 (기본값: 16)
 --gradient-accumulation  # 그래디언트 누적 단계 (기본값: 4)
---epochs           # 에폭 수 (기본값: 10)
---lr              # 학습률 (기본값: 3e-4)
+--epochs           # 에폭 수 (기본값: 20)
+--lr              # 학습률 (기본값: 5e-5)
+--warmup-ratio    # 워밍업 비율 (기본값: 0.1)
+--weight-decay    # 가중치 감쇠 (기본값: 0.1)
+--grad-clip       # 그래디언트 클리핑 (기본값: 1.0)
+
+# Phase 선택
+--enable-phase1    # Phase 1 안정성 기능 활성화 (기본값: True)
+--enable-phase2    # Phase 2 뇌과학 기능 활성화 (기본값: True)
+--enable-phase3    # Phase 3 성능 기능 활성화 (기본값: True)
+--minimal         # 모든 고급 기능 비활성화
+
+# Phase 1: 안정성 기능
+--memory-temperature    # 메모리 게이팅 온도 (기본값: 1.0)
+--use-stop-gradient    # 메모리 검색에서 그래디언트 중단 (기본값: True)
+--memory-dropout       # 메모리 드롭아웃 비율 (기본값: 0.1)
+--residual-weight     # 잔차 연결 가중치 (기본값: 0.1)
+
+# Phase 2: neuroscience 기능
+--enable-homeostasis   # 항상성 가소성 활성화 (기본값: True)
+--enable-sleep-wake    # 수면-각성 주기 활성화 (기본값: True)
+--enable-cls          # 보완 학습 시스템 활성화 (기본값: True)
+--target-firing-rate  # 항상성 목표 발화율 (기본값: 0.1)
+--consolidation-cycle # 수면-각성 주기당 단계 (기본값: 1000)
+
+# Phase 3: 성능 기능
+--use-gpu-memory      # GPU 가속 메모리 사용 (기본값: True)
+--async-memory        # 비동기 메모리 작업 활성화 (기본값: True)
+--enable-episodic     # 에피소드 메모리 활성화 (기본값: True)
+--enable-working      # 작업 메모리 활성화 (기본값: True)
+--episodic-capacity   # 에피소드 메모리 용량 (기본값: 10000)
+--working-memory-slots # 작업 메모리 슬롯 (기본값: 8)
 
 # 메모리 시스템
---stm-capacity     # 단기 기억 용량 (기본값: 64)
---ltm-capacity     # 장기 기억 용량 (기본값: 10000)
---archive-capacity # 보관 용량 (기본값: 100000)
-
-# 임베딩 옵션
---embedding-stage     # BGE-M3 훈련 단계 (1=어댑터만, 2=전체 미세조정)
+--stm-capacity     # 단기 기억 용량 (기본값: 128)
+--ltm-dim         # 장기 기억 차원 (기본값: 256)
 
 # 모니터링 및 체크포인팅
 --wandb           # Weights & Biases 로깅 활성화
---wandb-project   # W&B 프로젝트 이름
---checkpoint-dir  # 체크포인트 디렉토리
+--wandb-project   # W&B 프로젝트 이름 (기본값: cortex-gpt-unified)
+--checkpoint-dir  # 체크포인트 디렉토리 (기본값: checkpoints/cortex_unified)
 --resume         # 체크포인트에서 재개 (auto/경로)
+--seed           # 랜덤 시드 (기본값: 42)
 ```
 
 ### 🚀 권장 훈련 설정
 
 #### 테스트 및 개발
 ```bash
-# 빠른 테스트를 위한 작은 모델
---dim 256 --lr 1e-3 --batch-size 4 --epochs 20
+# 빠른 테스트를 위한 작은 모델 (기본 설정)
+uv run scripts/train_cortexgpt.py \
+    --dim 256 --lr 1e-3 --batch-size 4 --epochs 5 \
+    --minimal  # 모든 고급 기능 비활성화
 ```
 
 #### 데모 훈련
 ```bash
-# 데모를 위한 중간 모델
---dim 512 --lr 5e-4 --batch-size 8 --gradient-accumulation 4
+# 기본 샘플 데이터로 중간 모델
+uv run scripts/train_cortexgpt.py \
+    --dim 512 --lr 5e-4 --batch-size 8 --epochs 10
+    
+# 특정 phase 기능과 함께
+uv run scripts/train_cortexgpt.py \
+    --dim 512 --batch-size 8 \
+    --enable-phase1 --memory-temperature 2.0 \
+    --enable-phase2 --enable-homeostasis
 ```
 
 #### 프로덕션 훈련
 ```bash
-# 실제 훈련을 위한 큰 모델
---dim 768 --lr 3e-4 --batch-size 4 --gradient-accumulation 8 --wandb
+# KLUE 데이터셋으로 큰 모델 (모든 기능 기본 활성화)
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/klue/prepared/train.bin \
+    --val-data data/datasets/klue/prepared/val.bin \
+    --dim 768 --lr 3e-4 --batch-size 4 --gradient-accumulation 8 \
+    --epochs 20 --wandb
+
+# 또는 커스텀 설정으로
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/klue/prepared/train.bin \
+    --val-data data/datasets/klue/prepared/val.bin \
+    --use-gpu-memory --async-memory \
+    --enable-episodic --enable-working \
+    --wandb
+```
+
+#### 성능 벤치마킹
+```bash
+# 최대 성능 설정
+uv run scripts/train_cortexgpt.py \
+    --train-data data/datasets/klue/prepared/train.bin \
+    --val-data data/datasets/klue/prepared/val.bin \
+    --dim 768 --batch-size 16 \
+    --use-gpu-memory --async-memory \
+    --episodic-capacity 50000 \
+    --working-memory-slots 16 \
+    --num-workers 8
 ```
 
 ### 🚀 BGE-M3 하이브리드 임베딩 (기본 활성화)
@@ -530,26 +768,48 @@ CortexGPT는 우수한 다국어 이해를 위해 최첨단 BGE-M3 임베딩을 
 ```bash
 # 1단계: 어댑터만 훈련 (BGE 동결)
 uv run scripts/train_cortexgpt.py \
-    --dataset klue \
+    --train-data data/datasets/klue/prepared/train.bin \
+    --val-data data/datasets/klue/prepared/val.bin \
     --bge-stage 1 \
     --epochs 10
 
 # 2단계: 전체 미세조정 (선택사항)
 uv run scripts/train_cortexgpt.py \
-    --dataset klue \
+    --train-data data/datasets/klue/prepared/train.bin \
+    --val-data data/datasets/klue/prepared/val.bin \
     --bge-stage 2 \
     --epochs 5 \
-    --resume checkpoints/model_best.pt
+    --resume checkpoints/cortex_unified/cortex_gpt_best.pt
 ```
 
 ### 🔬 연구 및 개발
 
-CortexGPT는 여러 신경과학 개념을 구현합니다:
+CortexGPT v2.0은 고급 뇌과학 개념을 구현합니다:
 
+**핵심 개념**:
 - **헤비안 학습**: "함께 발화하는 뉴런은 함께 연결된다"
 - **메모리 통합**: STM에서 LTM으로의 점진적 전이
 - **선택적 주의**: 관련 정보에 집중
 - **지속적 학습**: 잊지 않고 새로운 작업 학습
+
+**Phase 1 - 안정성 메커니즘**:
+- **온도 제어**: 메모리 게이트에서 파국적인 승자독식 방지
+- **그래디언트 중단**: 메모리 검색에서 불안정한 피드백 루프 제거
+- **부드러운 희소성**: Gumbel-Softmax를 통한 매끄러운 그래디언트 흐름
+- **손실 복구**: 훈련 불안정성의 자동 감지 및 복구
+
+**Phase 2 - Brain-inspired features**:
+- **Homeostatic plasticity**: 안정적인 neuron firing rate 유지 (목표: 0.1)
+- **Sleep-wake cycles**: 3단계 consolidation (Wake → NREM → REM)
+- **Complementary Learning Systems**: 빠른 hippocampal vs 느린 neocortical pathways
+- **BCM metaplasticity**: Synaptic modification을 위한 sliding threshold
+
+**Phase 3 - Cognitive architecture**:
+- **FAISS GPU memory**: Similarity search에서 35배 속도 향상
+- **Episodic memory**: Temporal sequence learning 및 recall
+- **Working memory**: Task-specific attention gates
+- **Hierarchical compression**: Progressive memory abstraction
+- **Cognitive features**: Analogy detection, causal reasoning, concept formation
 
 ### 📝 인용
 

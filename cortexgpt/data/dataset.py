@@ -32,4 +32,9 @@ class TokenizedDataset(Dataset):
         chunk = self.data[idx:idx + self.block_size + 1]
         x = torch.from_numpy(chunk[:-1].astype(np.int64))
         y = torch.from_numpy(chunk[1:].astype(np.int64))
-        return x, y
+        
+        # Return as dictionary for compatibility with trainer
+        return {
+            'input_ids': x,
+            'labels': y
+        }
