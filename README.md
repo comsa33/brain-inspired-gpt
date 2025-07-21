@@ -16,6 +16,17 @@
 
 ## English
 
+### 📖 About CortexGPT
+
+CortexGPT is a revolutionary language model that mimics human brain's learning mechanisms. Unlike traditional models that require separate training and inference phases, CortexGPT learns continuously in real-time, just like humans do. It features a biologically-inspired memory system with Short-Term Memory (STM), Long-Term Memory (LTM), and Archive storage, enabling it to remember and learn from every interaction while efficiently managing its knowledge.
+
+Key innovations:
+- **Real-time continuous learning** without the train/inference distinction
+- **Human-like memory hierarchy** for efficient knowledge management
+- **Self-improvement mechanisms** through experience-based learning
+- **Native multilingual support** with BGE-M3 embeddings (100+ languages)
+- **Ultra-fast data loading** with async multiprocessing
+
 ### 🏛️ Architecture
 
 ```mermaid
@@ -47,13 +58,13 @@ graph TB
     Learner -.-> |"Update"| STM
     Learner -.-> |"Transfer"| LTM
     
-    style Input fill:#e6f3ff
-    style Transformer fill:#e6f3ff
-    style STM fill:#ffe6e6
-    style LTM fill:#e6ffe6
-    style Archive fill:#e6e6ff
-    style Learner fill:#e6f3ff
-    style Output fill:#e6f3ff
+    style Input fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
+    style Transformer fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
+    style STM fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
+    style LTM fill:#e6ffe6,stroke:#333,stroke-width:2px,color:#000
+    style Archive fill:#e6e6ff,stroke:#333,stroke-width:2px,color:#000
+    style Learner fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
+    style Output fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ### 🌟 Key Features

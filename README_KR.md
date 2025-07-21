@@ -16,6 +16,17 @@
 
 ## 한국어
 
+### 📖 CortexGPT 소개
+
+CortexGPT는 인간의 뇌 학습 메커니즘을 모방한 혁신적인 언어 모델입니다. 기존 모델들이 훈련과 추론을 별도로 수행하는 것과 달리, CortexGPT는 인간처럼 실시간으로 지속적으로 학습합니다. 단기 기억(STM), 장기 기억(LTM), 보관 메모리(Archive)로 구성된 생물학적 영감을 받은 메모리 시스템을 특징으로 하며, 모든 상호작용에서 학습하고 기억하면서 지식을 효율적으로 관리합니다.
+
+주요 혁신:
+- **실시간 지속 학습** - 훈련/추론 구분 없이 계속 학습
+- **인간과 유사한 메모리 계층** - 효율적인 지식 관리
+- **경험 기반 자기 개선 메커니즘** - 상호작용을 통해 성능 향상
+- **네이티브 다국어 지원** - BGE-M3 임베딩으로 100개 이상 언어 지원
+- **초고속 데이터 로딩** - 비동기 멀티프로세싱으로 즉시 훈련 시작
+
 ### 🏛️ 아키텍처
 
 ```mermaid
@@ -47,13 +58,13 @@ graph TB
     Learner -.-> |"업데이트"| STM
     Learner -.-> |"전송"| LTM
     
-    style Input fill:#e6f3ff
-    style Transformer fill:#e6f3ff
-    style STM fill:#ffe6e6
-    style LTM fill:#e6ffe6
-    style Archive fill:#e6e6ff
-    style Learner fill:#e6f3ff
-    style Output fill:#e6f3ff
+    style Input fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
+    style Transformer fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
+    style STM fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
+    style LTM fill:#e6ffe6,stroke:#333,stroke-width:2px,color:#000
+    style Archive fill:#e6e6ff,stroke:#333,stroke-width:2px,color:#000
+    style Learner fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
+    style Output fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ### 🌟 핵심 특징
