@@ -48,6 +48,8 @@ def main():
     data_group = parser.add_argument_group("Data Configuration")
     data_group.add_argument("--train-data", type=str, default="data/sample_train.bin",
                           help="Training data path")
+    data_group.add_argument("--num-workers", type=int, default=4,
+                          help="Number of data loading workers")
     data_group.add_argument("--val-data", type=str, default="data/sample_val.bin",
                           help="Validation data path")
     
@@ -229,7 +231,7 @@ def main():
         warmup_ratio=args.warmup_ratio,
         weight_decay=0.1,
         grad_clip=1.0,
-        num_workers=2,  # Reduced workers
+        num_workers=args.num_workers,  # Use command line argument
         checkpoint_dir=args.checkpoint_dir,
         wandb=args.wandb,
         wandb_project="cortex-gpt-neuro-3090",
