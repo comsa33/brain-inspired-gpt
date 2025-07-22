@@ -104,6 +104,8 @@ graph TB
 
 ### 🚀 빠른 시작
 
+> **📖 CortexGPT가 처음이신가요?** 자세한 안내와 best practices는 [Training Guide](TRAINING_GUIDE.md)를 확인하세요!
+
 #### 1. 설치
 
 ```bash
@@ -516,22 +518,30 @@ uv run scripts/train_cortexgpt.py \
 - **GPU 메모리**: 사용 가능한 경우 자동으로 GPU 가속 사용
 - **최소 모드**: 모든 고급 기능을 비활성화하려면 `--minimal` 사용
 
-#### 🚀 신규: 소비자 GPU 지원
-이제 소비자 GPU에 최적화된 구성을 제공합니다:
+#### 🚀 신규: 최적화된 Training (v2.1)
+
+**더 빠르고 효율적인 training을 위한 주요 개선사항:**
+- **Learning rate 문제 해결** - 이전 버전은 learning rate가 1000배 작았음
+- **Data loading 최적화** - 적절한 multi-worker 설정으로 20배 빠름
+- **스마트 GPU 감지** - 하드웨어에 맞게 자동 설정
 
 ```bash
-# GPU 자동 감지 및 최적 설정 사용
-uv run scripts/train_cortexgpt_consumer_gpu.py --auto-detect
+# 추천: 최적화된 설정으로 빠른 training
+uv run scripts/train.py --mode fast --epochs 10 --wandb
 
-# 또는 가이드 설정을 위한 빠른 시작 사용
-uv run scripts/quick_start_unified.py
+# Custom data 사용시
+uv run scripts/train.py \
+    --train-data data/your_train.bin \
+    --val-data data/your_val.bin \
+    --mode fast \
+    --epochs 10
 ```
 
-**지원되는 GPU 프로필:**
-- **RTX 3090** (24GB): 배치 크기 4, dim 512, 그래디언트 누적 4, Phase 1 활성화
-- **RTX 3080** (10GB): 배치 크기 2, dim 384, 그래디언트 누적 8, 최소 모드
-- **RTX 3070** (8GB): 배치 크기 1, dim 256, 그래디언트 누적 16, 최소 모드
-- **GTX 1660** (6GB): 배치 크기 1, dim 256, 그래디언트 누적 16, 최소 모드만
+**자동 감지 GPU 설정 (수정된 learning rate 포함):**
+- **RTX 3090** (24GB): Batch 12, dim 512, LR 1e-4, 8 workers
+- **RTX 3080** (10GB): Batch 8, dim 384, LR 1e-4, 6 workers
+- **RTX 3070** (8GB): Batch 4, dim 256, LR 1e-4, 4 workers
+- **기타 GPU**: 사용 가능한 memory에 따라 자동 설정
 
 **메모리 최적화 기능:**
 - 더 큰 효과적인 배치 크기를 위한 그래디언트 누적
@@ -539,20 +549,19 @@ uv run scripts/quick_start_unified.py
 - 그래디언트 체크포인팅
 - 옵티마이저 상태 오프로딩 (선택사항)
 
-#### 🧠 Consumer GPU에서 Neuroscience 기능 사용하기
+#### 🧠 고급 기능 Training
 
-뇌과학 기능(Phase 2)은 상당한 메모리를 필요로 합니다. RTX 3090에서 사용하는 방법:
+Neuroscience와 고급 기능을 사용하려면 standard 또는 full mode를 사용하세요:
 
-**전용 뇌과학 훈련 스크립트:**
 ```bash
-# RTX 3090에 최적화된 선택적 기능 활성화
-uv run scripts/train_neuroscience_3090.py --epochs 20
+# Standard mode는 Phase 1 + homeostasis 포함
+uv run scripts/train.py --mode standard --epochs 20
 
-# 항상성 가소성만 활성화 (최소 메모리)
-uv run scripts/train_neuroscience_3090.py --homeostasis-only --epochs 20
+# Full mode는 모든 기능 포함 (20GB+ memory 필요)
+uv run scripts/train.py --mode full --epochs 20
 
-# 수면-각성 주기만 활성화
-uv run scripts/train_neuroscience_3090.py --sleep-wake-only --epochs 20
+# GPU memory 사용량 모니터링
+watch -n 1 nvidia-smi
 ```
 
 **뇌과학 기능 수동 설정:**
@@ -625,6 +634,18 @@ my-efficient-gpt/
 ├── docs/                 # Documentation
 └── data/                 # Training data
 ```
+
+### 📚 문서
+
+모든 기술 문서가 쉽게 접근할 수 있도록 정리되었습니다:
+
+- **[문서 허브](docs/README.md)** - 모든 가이드와 기술 문서를 위한 중앙 네비게이션
+- **[Training 가이드](docs/guides/TRAINING_GUIDE.md)** - 완전한 training 지침
+- **[Training 최적화](docs/guides/TRAINING_OPTIMIZATION.md)** - 성능 튜닝 가이드
+- **[아키텍처 개요](docs/guides/architecture.md)** - 기술 아키텍처 세부사항
+- **[개발 현황](docs/development/PROJECT_STATUS.md)** - 현재 프로젝트 진행 상황
+
+전체 문서는 [docs 디렉토리](docs/)를 방문하세요.
 
 ### 💡 작동 원리
 

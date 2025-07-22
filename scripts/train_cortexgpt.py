@@ -93,16 +93,16 @@ def main():
     
     # Training configuration
     train_group = parser.add_argument_group("Training Configuration")
-    train_group.add_argument("--batch-size", type=int, default=16,
+    train_group.add_argument("--batch-size", type=int, default=8,
                            help="Batch size")
     train_group.add_argument("--gradient-accumulation", type=int, default=1,
                            help="Gradient accumulation steps")
     train_group.add_argument("--epochs", type=int, default=20,
                            help="Number of epochs")
-    train_group.add_argument("--lr", type=float, default=5e-5,
-                           help="Learning rate")
-    train_group.add_argument("--warmup-ratio", type=float, default=0.1,
-                           help="Warmup ratio")
+    train_group.add_argument("--lr", type=float, default=1e-4,
+                           help="Learning rate (increased for better convergence)")
+    train_group.add_argument("--warmup-ratio", type=float, default=0.05,
+                           help="Warmup ratio (reduced for faster convergence)")
     train_group.add_argument("--weight-decay", type=float, default=0.1,
                            help="Weight decay")
     train_group.add_argument("--grad-clip", type=float, default=1.0,
