@@ -803,6 +803,152 @@ uv run scripts/train_cortexgpt.py \
     --resume checkpoints/cortex_unified/cortex_gpt_best.pt
 ```
 
+### 🧠 메모리 시스템 학습 원리: STM & LTM 상세 설명
+
+CortexGPT의 메모리 시스템은 인간 뇌의 해마(STM)와 대뇌피질(LTM) 상호작용을 모방합니다.
+
+#### 메모리 시스템 개요
+
+```mermaid
+graph LR
+    Input["🔤 입력 텍스트"] --> STM["💭 STM<br/>(단기 기억)<br/>용량: 32-128 슬롯"]
+    STM --> |"3회 이상 반복"| LTM["🧠 LTM<br/>(장기 기억)<br/>용량: 10K-100K"]
+    STM --> |"Query"| Retrieval1["🔍 빠른 검색"]
+    LTM --> |"Query"| Retrieval2["🔍 지식 검색"]
+    Retrieval1 --> Output["💬 응답"]
+    Retrieval2 --> Output
+    
+    style STM fill:#ffe6e6
+    style LTM fill:#e6ffe6
+```
+
+#### 💭 STM (Short-Term Memory) - 빠른 학습자
+
+**역할**: 인간의 작업 기억처럼 즉각적인 컨텍스트 저장
+**용량**: 32-128 슬롯 (설정 가능)
+**학습 속도**: 즉각적, 현재 대화 내에서
+
+**학습 방법**:
+1. **Attention 기반 저장**: Attention 메커니즘으로 중요한 정보 결정
+2. **경쟁적 슬롯**: 각 슬롯은 다른 유형의 정보에 특화
+3. **사용 추적**: 각 메모리가 얼마나 자주 접근되는지 기록
+
+**실제 예시**:
+```python
+# 사용자: "내 이름은 애리스야"
+# STM 처리 과정:
+1. "애리스" 인코딩 → 벡터 표현
+2. 최적 슬롯 찾기 (예: 이름을 위한 슬롯 #7)
+3. attention weight 0.95로 저장 (매우 관련성 높음)
+4. 사용 횟수 증가: slot_7_count = 1
+
+# 사용자: "내 이름이 뭐였지?"
+# STM 검색:
+1. "이름" 컨텍스트로 모든 슬롯 조회
+2. 슬롯 #7이 강하게 반응 (높은 attention)
+3. 신뢰도 0.95로 "애리스" 검색
+```
+
+#### 🧠 LTM (Long-Term Memory) - 지식 저장소
+
+**역할**: 통합되고 압축된 지식 저장
+**용량**: 10,000-100,000 항목
+**학습 속도**: 점진적, 반복과 중요도를 통해
+
+**학습 방법**:
+1. **STM에서 통합**: 자주 사용된 STM 항목(3회 이상)이 전송됨
+2. **압축**: 정보를 핵심 패턴으로 축약
+3. **연상 저장**: 유사한 개념들이 함께 클러스터링
+
+**실제 예시**:
+```python
+# 파리에 대한 여러 대화 후:
+STM 경험:
+1. "파리는 프랑스의 수도입니다" (횟수: 1)
+2. "에펠탑은 파리에 있습니다" (횟수: 2)
+3. "파리는 빛의 도시라고 불립니다" (횟수: 3) → 통합 트리거!
+
+LTM 통합:
+1. 압축: 핵심 관계 추출 [파리 → 프랑스, 수도, 에펠탑, 빛의 도시]
+2. 연상 링크 생성: 파리 ↔ 프랑스 ↔ 유럽 수도
+3. 빠른 검색을 위한 임베딩과 함께 저장
+
+# 미래 질문: "파리에 대해 알려줘"
+LTM이 높은 신뢰도로 전체 지식 클러스터 검색
+```
+
+#### 🔄 훈련 과정: 메모리가 학습하는 방법
+
+**훈련 중**:
+```python
+# 메모리를 통한 forward pass
+text = "태양은 항성입니다"
+
+1. Transformer가 텍스트 처리 → hidden_states
+2. STM이 "태양"과 "항성" 관계 저장
+3. 유사한 사실이 이전에 보였다면, LTM이 사전 지식 제공
+4. 결합된 지식으로 예측 생성
+5. Loss가 메모리 attention 가중치로 역전파
+
+# 학습되는 것:
+- STM attention 가중치: 어떤 정보가 중요한가?
+- STM 슬롯 특화: 어떤 슬롯이 어떤 유형의 정보를 저장하는가?
+- LTM 압축: 핵심 정보를 어떻게 추출하는가?
+- LTM 검색: 관련 지식을 어떻게 빠르게 찾는가?
+```
+
+**메모리 증강 Loss**:
+```python
+total_loss = (
+    language_modeling_loss +          # 주 작업
+    0.1 * stm_attention_entropy +     # STM 슬롯 사용 촉진
+    0.05 * ltm_retrieval_accuracy +   # LTM 검색 개선
+    0.01 * consolidation_quality      # 더 나은 STM→LTM 전송
+)
+```
+
+#### 🎯 모델 동작에 미치는 실제 영향
+
+**메모리 시스템 없이** (표준 Transformer):
+- 컨텍스트 윈도우 후 정보 잊음
+- 대화에서 학습 불가
+- 개인화 없음
+
+**STM만 사용** (Minimal 모드):
+- 대화 내에서 기억
+- 컨텍스트에 빠른 적응
+- 최근 정보로 제한
+
+**STM + LTM 사용** (Full 모드):
+- 대화 간 기억 유지
+- 시간이 지나면서 지식 축적
+- 오래된 정보 회상 가능
+- 경험에서 진짜 학습
+
+**대화 예시**:
+```
+Epoch 1:
+사용자: "나는 데이터 과학에 Python을 선호해"
+봇: "알겠습니다! Python은 데이터 과학에 훌륭합니다" (STM이 선호도 저장)
+
+Epoch 10:
+사용자: "ML 프로젝트에 어떤 언어를 사용해야 할까?"
+봇: "데이터 과학에 Python을 선호하신다고 하셨으니, ML 프로젝트에도 Python을 추천합니다" (LTM이 통합된 선호도 회상)
+```
+
+#### 🔧 설정 예시
+
+```bash
+# STM만 사용한 빠른 훈련
+uv run scripts/train.py --mode fast --stm-capacity 64
+
+# 작은 LTM과 균형 잡힌 훈련
+uv run scripts/train.py --mode standard --stm-capacity 128 --ltm-capacity 10000
+
+# 전체 메모리 시스템
+uv run scripts/train.py --mode full --stm-capacity 256 --ltm-capacity 100000
+```
+
 ### 🔬 연구 및 개발
 
 CortexGPT v2.0은 고급 뇌과학 개념을 구현합니다:

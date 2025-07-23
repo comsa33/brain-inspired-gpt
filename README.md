@@ -793,6 +793,152 @@ uv run scripts/train_cortexgpt.py \
     --resume checkpoints/model_best.pt
 ```
 
+### 🧠 How Memory Systems Learn: STM & LTM Explained
+
+CortexGPT's memory system mimics human brain's hippocampus (STM) and neocortex (LTM) interaction.
+
+#### Memory System Overview
+
+```mermaid
+graph LR
+    Input["🔤 Input Text"] --> STM["💭 STM<br/>(Short-Term Memory)<br/>Capacity: 32-128 slots"]
+    STM --> |"Repeated 3+ times"| LTM["🧠 LTM<br/>(Long-Term Memory)<br/>Capacity: 10K-100K"]
+    STM --> |"Query"| Retrieval1["🔍 Fast Retrieval"]
+    LTM --> |"Query"| Retrieval2["🔍 Knowledge Search"]
+    Retrieval1 --> Output["💬 Response"]
+    Retrieval2 --> Output
+    
+    style STM fill:#ffe6e6
+    style LTM fill:#e6ffe6
+```
+
+#### 💭 STM (Short-Term Memory) - The Quick Learner
+
+**What it does**: Stores immediate context like human working memory
+**Capacity**: 32-128 slots (configurable)
+**Learning Speed**: Instant, within current conversation
+
+**How it learns**:
+1. **Attention-based storage**: Uses attention mechanism to decide what's important
+2. **Competitive slots**: Each slot specializes in different types of information
+3. **Usage tracking**: Counts how often each memory is accessed
+
+**Real Example**:
+```python
+# User says: "My name is Alice"
+# STM Process:
+1. Encode "Alice" → Vector representation
+2. Find best slot (e.g., slot #7 for names)
+3. Store with attention weight 0.95 (very relevant)
+4. Increment usage counter: slot_7_count = 1
+
+# User says: "What's my name?"
+# STM Retrieval:
+1. Query all slots with "name" context
+2. Slot #7 responds strongly (high attention)
+3. Retrieve "Alice" with confidence 0.95
+```
+
+#### 🧠 LTM (Long-Term Memory) - The Knowledge Base
+
+**What it does**: Stores consolidated, compressed knowledge
+**Capacity**: 10,000-100,000 entries
+**Learning Speed**: Gradual, through repetition and importance
+
+**How it learns**:
+1. **Consolidation from STM**: Frequently used STM items (3+ uses) get transferred
+2. **Compression**: Reduces information to essential patterns
+3. **Associative storage**: Similar concepts cluster together
+
+**Real Example**:
+```python
+# After multiple conversations about Paris:
+STM encounters:
+1. "Paris is the capital of France" (count: 1)
+2. "The Eiffel Tower is in Paris" (count: 2)
+3. "Paris is called the City of Light" (count: 3) → Consolidation triggered!
+
+LTM consolidation:
+1. Compress: Extract key relations [Paris → France, capital, Eiffel Tower, City of Light]
+2. Create associative links: Paris ↔ France ↔ European capitals
+3. Store with embedding for fast retrieval
+
+# Future query: "Tell me about Paris"
+LTM retrieves entire knowledge cluster with high confidence
+```
+
+#### 🔄 Training Process: How Memories Learn
+
+**During Training**:
+```python
+# Forward pass with memory
+text = "The Sun is a star"
+
+1. Transformer processes text → hidden_states
+2. STM stores "Sun" and "star" relationship
+3. If similar facts seen before, LTM provides prior knowledge
+4. Combined knowledge generates prediction
+5. Loss backpropagates through memory attention weights
+
+# What gets learned:
+- STM attention weights: What information is important?
+- STM slot specialization: Which slots store which types of info?
+- LTM compression: How to extract key information?
+- LTM retrieval: How to find relevant knowledge quickly?
+```
+
+**Memory-Augmented Loss**:
+```python
+total_loss = (
+    language_modeling_loss +          # Primary task
+    0.1 * stm_attention_entropy +     # Encourage STM slot usage
+    0.05 * ltm_retrieval_accuracy +   # Improve LTM search
+    0.01 * consolidation_quality      # Better STM→LTM transfer
+)
+```
+
+#### 🎯 Practical Impact on Model Behavior
+
+**Without Memory Systems** (Standard Transformer):
+- Forgets information after context window
+- Can't learn from conversation
+- No personalization
+
+**With STM Only** (Minimal Mode):
+- Remembers within conversation
+- Quick adaptation to context
+- Limited to recent information
+
+**With STM + LTM** (Full Mode):
+- Remembers across conversations
+- Builds knowledge over time
+- Can recall old information
+- Truly learns from experience
+
+**Example Conversation**:
+```
+Epoch 1:
+User: "I prefer Python for data science"
+Bot: "Noted! Python is great for data science" (STM stores preference)
+
+Epoch 10:
+User: "What language should I use for my ML project?"
+Bot: "Based on your preference for Python in data science, I'd recommend Python for your ML project" (LTM recalls consolidated preference)
+```
+
+#### 🔧 Configuration Examples
+
+```bash
+# Fast training with STM only
+uv run scripts/train.py --mode fast --stm-capacity 64
+
+# Balanced with small LTM
+uv run scripts/train.py --mode standard --stm-capacity 128 --ltm-capacity 10000
+
+# Full memory system
+uv run scripts/train.py --mode full --stm-capacity 256 --ltm-capacity 100000
+```
+
 ### 🔬 Research & Development
 
 CortexGPT v2.0 implements advanced neuroscience-inspired concepts:
